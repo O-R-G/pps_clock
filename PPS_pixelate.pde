@@ -1,5 +1,6 @@
 // Public Private Secret Clock
 // O-R-G
+// requires ipcature lib https://github.com/singintime/ipcapture
 
 import processing.video.*;
 import ipcapture.*;
