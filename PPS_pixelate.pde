@@ -2,6 +2,8 @@
 // O-R-G
 // requires ipcature lib https://github.com/singintime/ipcapture
 
+// ** todo ** clean up ipcam vs mov implementation, add switching
+
 import processing.video.*;
 import ipcapture.*;
 
@@ -16,18 +18,19 @@ int sortProgress;
 
 
 void setup() {
-  // size(640, 360);
-  size(640, 480);
-frameRate(5);
-  noStroke();
+	// size(640, 360);
+  	size(640, 480);
+	frameRate(5);
+  	noStroke();
   
-mov = new Movie(this, "broadway-fast.mov");
-  mov.loop();
-  pixelsW = width / blockSize;
-  pixelsH = height / blockSize;
-  pixels = pixelsW * pixelsH;
-  movColors = new color[pixels];
-  println("pixels : " + pixels);
+	mov = new Movie(this, "broadway-fast.mov");
+  	mov.loop();
+  	pixelsW = width / blockSize;
+  	pixelsH = height / blockSize;
+  	pixels = pixelsW * pixelsH;
+  	movColors = new color[pixels];
+  	println("pixels : " + pixels);
+	
 	// ipcapture
   
 	cam = new IPCapture(this, "http://192.168.1.21/live", "", "");
@@ -36,8 +39,7 @@ mov = new Movie(this, "broadway-fast.mov");
 
 void draw() {
 
-	sortProgress++;
-
+	sortProgress+=10;
 
   if (mov.available() == true) {
     mov.read();
@@ -57,14 +59,30 @@ void draw() {
 
   background(0);
 
-/*
+	// ipcam
+
+  	if (cam.isAvailable()) {
+		cam.read();
+		cam.loadPixels();
+		int count = 0;
+    	for (int j = 0; j < pixelsH; j++) {
+			for (int i = 0; i < pixelsW; i++) {
+				movColors[count] = cam.get(i*blockSize, j*blockSize);
+				count++;
+			}
+		}
+		// image(cam,0,0);
+	}
+
+	movColors = sort(movColors,sortProgress%(pixels-1));
+
+
   for (int j = 0; j < pixelsH; j++) {
     for (int i = 0; i < pixelsW; i++) {
       fill(movColors[j*pixelsW + i]);
       rect(i*blockSize, j*blockSize, blockSize, blockSize);
     }
   }
-*/
 
 /*
 // invert rows, columns
@@ -77,11 +95,6 @@ void draw() {
 */
 
 
-// ipcam
-  if (cam.isAvailable()) {
-    cam.read();
-    image(cam,0,0);
-  }
 
 	// saveFrame("out/frame-####.png");
 
