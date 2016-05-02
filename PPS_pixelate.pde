@@ -10,8 +10,8 @@ IPCapture cam;
 
 color colors[];
 
-// boolean ip = true;
-boolean ip = false;
+//boolean ip = true;
+ boolean ip = false;
 int pixels, pixelsH, pixelsW;
 int pixelSize = 10;
 int sortProgress;
@@ -55,10 +55,10 @@ void draw() {
 		}
 	}
 
-	// colors = sort(colors,sortProgress%(pixels-1));
+	colors = sort(colors,sortProgress%(pixels-1));
 	// colors = sort(colors);
   
-	shuffleArray(colors);
+	// shuffleArray(colors);
 
 	for (int j = 0; j < pixelsH; j++) {
     	for (int i = 0; i < pixelsW; i++) {
