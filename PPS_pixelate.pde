@@ -10,10 +10,10 @@ IPCapture cam;
 
 color colors[];
 
-//boolean ip = true;
- boolean ip = false;
+// boolean ip = true;
+boolean ip = false;
 int pixels, pixelsH, pixelsW;
-int pixelSize = 10;
+int pixelSize = 2;
 int sortProgress;
 float sortSpeed = 5.0;
 float scale = 1.0;
@@ -21,7 +21,7 @@ String ipsrc = "http://192.168.1.21/live";
 String movsrc = "broadway-slow.mov";
 
 void setup() {
-  	size(640, 480);
+  	size(360, 180);
 	frameRate(60);
   	noStroke();
 	if (ip) {
@@ -55,10 +55,10 @@ void draw() {
 		}
 	}
 
-	colors = sort(colors,sortProgress%(pixels-1));
+	// colors = sort(colors,sortProgress%(pixels-1));
 	// colors = sort(colors);
   
-	// shuffleArray(colors);
+	shuffleArray(colors);
 
 	for (int j = 0; j < pixelsH; j++) {
     	for (int i = 0; i < pixelsW; i++) {
@@ -70,17 +70,28 @@ void draw() {
 
 	// ** todo ** write out to video
 	// saveFrame("out/frame-####.png");
+
+	// * debug *
+
+	// printArray(colors);
+	// println("colors[0] " + hex(colors[0]) );
+	println("colors[0] " + binary(colors[0]) );
 }
 
 
 
 void shuffleArray(int[] array) {
  
-	// ** not quite right, but promising **
+	// *impt* -- when an array is passed to a function,
+	// it is passed as a memory location not as data 
+	// so actions transform the original variable directly
+	// to act on the array's data and return a new array,
+	// then the function must be typed, array data copied,
+	// and a new array returned at the end.
 
 	// https://forum.processing.org/two/discussion/3546/how-to-randomize-order-of-array
 	// with code from WikiPedia; Fisher–Yates shuffle 
-	//@ <a href="http://en.wikipedia.org/wiki/Fisher" target="_blank" rel="nofollow">http://en.wikipedia.org/wiki/Fisher</a>–Yates_shuffle
+	// http://en.wikipedia.org/wiki/Fisher
    
   	// i is the number of items remaining to be shuffled.
   	for (int i = array.length; i > 1; i--) {
