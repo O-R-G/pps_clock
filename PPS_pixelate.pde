@@ -7,6 +7,9 @@
 // ** todo ** implement byte reader
 // ** todo ** examine asdf pixelsort
 // ** todo ** exchange random image rows?
+// ** todo ** add keydown control
+// ** fix ** float scale
+// ** fix ** pjava export always copies java
 
 import processing.video.*;
 import ipcapture.*;
@@ -17,15 +20,18 @@ IPCapture ipcam;
 
 color colors[];
 
-boolean ip = false;		// ip cam 
-boolean usb = true;		// usb cam
+boolean ip = false;			// ip cam 
+boolean usb = true;			// usb cam
+boolean sort = true;		// sort pixels
+boolean shuffle = false;	// shuffle pixels
 int pixels, pixelsH, pixelsW;
-int pixelSize = 8;
+int pixelSize = 10;
 int sortProgress;
-int alpha = 255;	// [0-255]
+int alpha = 10;	// [0-255]
 float sortSpeed = 5.0;
-float scale = 1.0;
+float scale = 1.0;	// ** fix **
 String ipsrc = "http://192.168.1.21/live";	
+String usbsrc = "FaceTime HD Camera (Display)";	
 String movsrc = "basement-k.mov";
 
 void setup() {
@@ -40,7 +46,7 @@ void setup() {
 	  	println("Using usb camera . . . ");
 		// println("Available cameras . . . ");
 		// printArray(Capture.list());
-	    cam = new Capture(this, 640, 360, "FaceTime HD Camera (Display)",30);
+	    cam = new Capture(this, 640, 360, usbsrc, 30);
     	cam.start();     
 	} else {
   		println("Using local mov . . . ");
@@ -52,6 +58,7 @@ void setup() {
   	pixels = pixelsW * pixelsH;
   	colors = new color[pixels];
   	println("Pixels : " + pixels);
+	colorMode(HSB, 255);
 }
 
 void draw() {
@@ -74,18 +81,29 @@ void draw() {
 
 	// sort
 
-	// colors = sort(colors,sortProgress%(pixels-1));
-	// colors = sort(colors);
-	shuffleArray(colors);
+	if (sort) {
+		// colors = sort(colors,sortProgress%(pixels-1));
+		colors = sort(colors);
+	}
+
+	if (shuffle) {
+		shuffleArray(colors);
+	}
 
 	// display
 
 	for (int j = 0; j < pixelsH; j++) {
     	for (int i = 0; i < pixelsW; i++) {
 			// fill(colors[j*pixelsW + i]);
-			fill(colors[j*pixelsW + i], alpha);
+			// fill(colors[j*pixelsW + i], alpha);
+			// fill(red(colors[j*pixelsW + i]),0,0,alpha);
+			// fill(hue(colors[j*pixelsW + i]),255,brightness(colors[j*pixelsW + i]),alpha);
+			// fill(hue(colors[j*pixelsW + i]), 255, 255, alpha);
+			// fill(hue(colors[j*pixelsW + i]), hue(colors[j*pixelsW + i]), hue(colors[j*pixelsW + i]), alpha);
+			// fill(brightness(colors[j*pixelsW + i]), brightness(colors[j*pixelsW + i]), brightness(colors[j*pixelsW + i]), alpha);
+			fill(saturation(colors[j*pixelsW + i]), saturation(colors[j*pixelsW + i]), saturation(colors[j*pixelsW + i]), alpha);
 			rect(i*pixelSize*scale, j*pixelSize*scale, pixelSize*scale, pixelSize*scale);
-			// rect(i*pixelSize*scale, j*pixelSize*scale, pixelSize/4, pixelSize/4);
+			// rect(i*pixelSize*scale, j*pixelSize*scale, pixelSize/2, pixelSize/2);
 		}
   	}
 
@@ -96,7 +114,7 @@ void draw() {
 
 	// printArray(colors);
 	// println("colors[0] " + hex(colors[0]) );
-	println("colors[0] " + binary(colors[0]) );
+	// println("colors[0] " + binary(colors[0]) );
 }
 
 void shuffleArray(int[] array) {
@@ -121,3 +139,18 @@ void shuffleArray(int[] array) {
 		array[i-1] = tmp;
 	}
 }
+
+
+void keyPressed() {
+  	switch(key) {
+		case 's':  
+			sort = !sort;		
+    		break;
+		case 'h':  
+			shuffle = !shuffle;		
+    		break;
+		default:
+    		break;
+	}
+}
+
