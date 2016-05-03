@@ -101,7 +101,8 @@ void draw() {
 			// fill(hue(colors[j*pixelsW + i]), 255, 255, alpha);
 			// fill(hue(colors[j*pixelsW + i]), hue(colors[j*pixelsW + i]), hue(colors[j*pixelsW + i]), alpha);
 			// fill(brightness(colors[j*pixelsW + i]), brightness(colors[j*pixelsW + i]), brightness(colors[j*pixelsW + i]), alpha);
-			fill(saturation(colors[j*pixelsW + i]), saturation(colors[j*pixelsW + i]), saturation(colors[j*pixelsW + i]), alpha);
+			// fill(saturation(colors[j*pixelsW + i]), saturation(colors[j*pixelsW + i]), saturation(colors[j*pixelsW + i]), alpha);
+			fill(hue(colors[j*pixelsW + i]), saturation(colors[j*pixelsW + i]), brightness(colors[j*pixelsW + i]), alpha);
 			rect(i*pixelSize*scale, j*pixelSize*scale, pixelSize*scale, pixelSize*scale);
 			// rect(i*pixelSize*scale, j*pixelSize*scale, pixelSize/2, pixelSize/2);
 		}
