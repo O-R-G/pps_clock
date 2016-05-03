@@ -2,37 +2,51 @@
 // O-R-G
 // requires https://github.com/singintime/ipcapture
 
+// ** todo ** shuffle partial arrays to make patterns
+// ** todo ** sort using bit shifting to get specific color values
+// ** todo ** implement byte reader
+// ** todo ** examine asdf pixelsort
+// ** todo ** exchange random image rows?
+
 import processing.video.*;
 import ipcapture.*;
 
 Movie mov;
-IPCapture cam;
+Capture cam;
+IPCapture ipcam;
 
 color colors[];
 
-// boolean ip = true;
-boolean ip = false;
+boolean ip = false;		// ip cam 
+boolean usb = true;		// usb cam
 int pixels, pixelsH, pixelsW;
-int pixelSize = 2;
+int pixelSize = 8;
 int sortProgress;
+int alpha = 255;	// [0-255]
 float sortSpeed = 5.0;
 float scale = 1.0;
 String ipsrc = "http://192.168.1.21/live";	
-String movsrc = "broadway-slow.mov";
+String movsrc = "basement-k.mov";
 
 void setup() {
-  	size(360, 180);
+  	size(640, 360);
 	frameRate(60);
   	noStroke();
 	if (ip) {
 	  	println("Using ip camera . . . ");
-		cam = new IPCapture(this, ipsrc, "", "");
-		cam.start();
-	} else if (!ip) {
+		ipcam = new IPCapture(this, ipsrc, "", "");
+		ipcam.start();
+	} else if (usb) {
+	  	println("Using usb camera . . . ");
+		// println("Available cameras . . . ");
+		// printArray(Capture.list());
+	    cam = new Capture(this, 640, 360, "FaceTime HD Camera (Display)",30);
+    	cam.start();     
+	} else {
   		println("Using local mov . . . ");
 		mov = new Movie(this, movsrc);
 	  	mov.loop();
-	}
+	} 
   	pixelsW = width / pixelSize;
   	pixelsH = height / pixelSize;
   	pixels = pixelsW * pixelsH;
@@ -41,28 +55,35 @@ void setup() {
 }
 
 void draw() {
-	background(0);
+
+	// background(0);
 	sortProgress+=sortSpeed;
 
-	if (ip && cam.isAvailable()) cam.read();
-	if (!ip && mov.available()) mov.read();
+	if (ip && ipcam.isAvailable()) ipcam.read();
+	if (usb && cam.available()) cam.read();
+	if (!ip && !usb && mov.available()) mov.read();
 	int count = 0;
 	for (int j = 0; j < pixelsH; j++) {
 		for (int i = 0; i < pixelsW; i++) {
-			if (ip)  colors[count] = cam.get(i*pixelSize, j*pixelSize);
-			if (!ip) colors[count] = mov.get(i*pixelSize, j*pixelSize);	
+			if (ip)  colors[count] = ipcam.get(i*pixelSize, j*pixelSize);
+			if (usb) colors[count] = cam.get(i*pixelSize, j*pixelSize);	
+			if (!ip && !usb) colors[count] = mov.get(i*pixelSize, j*pixelSize);	
 			count++;
 		}
 	}
 
+	// sort
+
 	// colors = sort(colors,sortProgress%(pixels-1));
 	// colors = sort(colors);
-  
 	shuffleArray(colors);
+
+	// display
 
 	for (int j = 0; j < pixelsH; j++) {
     	for (int i = 0; i < pixelsW; i++) {
-			fill(colors[j*pixelsW + i]);
+			// fill(colors[j*pixelsW + i]);
+			fill(colors[j*pixelsW + i], alpha);
 			rect(i*pixelSize*scale, j*pixelSize*scale, pixelSize*scale, pixelSize*scale);
 			// rect(i*pixelSize*scale, j*pixelSize*scale, pixelSize/4, pixelSize/4);
 		}
@@ -78,29 +99,24 @@ void draw() {
 	println("colors[0] " + binary(colors[0]) );
 }
 
-
-
 void shuffleArray(int[] array) {
  
-	// *impt* -- when an array is passed to a function,
+	// *note* -- when an array is passed to a function,
 	// it is passed as a memory location not as data 
 	// so actions transform the original variable directly
 	// to act on the array's data and return a new array,
 	// then the function must be typed, array data copied,
 	// and a new array returned at the end.
 
-	// https://forum.processing.org/two/discussion/3546/how-to-randomize-order-of-array
-	// with code from WikiPedia; Fisher–Yates shuffle 
-	// http://en.wikipedia.org/wiki/Fisher
-   
-  	// i is the number of items remaining to be shuffled.
+	// knuth shuffle
+	// https://en.wikipedia.org/wiki/Fisher–Yates_shuffle
+
+	// ** todo ** add parameter to shuffle only part of an array
+
   	for (int i = array.length; i > 1; i--) {
  
-    	// Pick a random element to swap with the i-th element.    	
 		int j = int(random(i));
- 
-    	// Swap array elements.
-    	int tmp = array[j];
+     	int tmp = array[j];
 		array[j] = array[i-1];
 		array[i-1] = tmp;
 	}
