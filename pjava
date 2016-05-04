@@ -19,9 +19,6 @@ parser.add_argument("action",
 parser.add_argument("sketch_dir",
                     help="directory of sketch to run")
 
-# output directory
-
-
 # optional arguments
 parser.add_argument("-c", "--clean",
                     action="store_true",

@@ -2,7 +2,6 @@
 // O-R-G
 // requires https://github.com/singintime/ipcapture
 
-// ** todo ** shuffle partial arrays to make patterns
 // ** todo ** sort using bit shifting to get specific color values
 // ** todo ** implement byte reader
 // ** todo ** examine asdf pixelsort
@@ -11,6 +10,10 @@
 // ** fix ** float scale
 // ** fix ** pjava export always copies java
 
+// build array which maps pixel locations
+// reset that map to show regular positions
+// could be dynamically resized
+
 import processing.video.*;
 import ipcapture.*;
 
@@ -18,26 +21,31 @@ Movie mov;
 Capture cam;
 IPCapture ipcam;
 
-color colors[];
+color colors[];					// raw pixel color vals
+int pixelmap[];					// pixel display mapping
 
-boolean ip = false;			// ip cam 
-boolean usb = true;			// usb cam
-boolean sort = true;		// sort pixels
-boolean shuffle = false;	// shuffle pixels
-int pixels, pixelsH, pixelsW;
-int pixelSize = 10;
-int sortProgress;
-int alpha = 10;	// [0-255]
-float sortSpeed = 5.0;
+boolean ip = false;				// ip cam 
+boolean usb = true;				// usb cam
+boolean display = true;			// display pixels
+boolean sort = false;			// sort pixels
+boolean kunthshuffle = false;	// shuffle pixels
+int pixels, ypixels, xpixels;
+int pixelsize = 8;
+int sortprogress;
+int alpha = 50;					// [0-255]
+float sortspeed = 5.0;
 float scale = 1.0;	// ** fix **
 String ipsrc = "http://192.168.1.21/live";	
 String usbsrc = "FaceTime HD Camera (Display)";	
-String movsrc = "basement-k.mov";
+String movsrc = "basement.mov";
 
 void setup() {
   	size(640, 360);
 	frameRate(60);
+	colorMode(HSB, 255);
   	noStroke();
+	background(0);
+
 	if (ip) {
 	  	println("Using ip camera . . . ");
 		ipcam = new IPCapture(this, ipsrc, "", "");
@@ -53,58 +61,70 @@ void setup() {
 		mov = new Movie(this, movsrc);
 	  	mov.loop();
 	} 
-  	pixelsW = width / pixelSize;
-  	pixelsH = height / pixelSize;
-  	pixels = pixelsW * pixelsH;
+
+  	xpixels = width / pixelsize;
+  	ypixels = height / pixelsize;
+  	pixels = xpixels * ypixels;
   	colors = new color[pixels];
   	println("Pixels : " + pixels);
-	colorMode(HSB, 255);
+
+	// init pixelmap[]
+
+	pixelmap = new int[pixels];
+
+	for (int i = 0; i < pixelmap.length; i++) {
+		pixelmap[i] = i;
+	}
+	printArray(pixelmap);
 }
 
 void draw() {
 
-	// background(0);
-	sortProgress+=sortSpeed;
+	sortprogress+=sortspeed;
 
 	if (ip && ipcam.isAvailable()) ipcam.read();
 	if (usb && cam.available()) cam.read();
 	if (!ip && !usb && mov.available()) mov.read();
 	int count = 0;
-	for (int j = 0; j < pixelsH; j++) {
-		for (int i = 0; i < pixelsW; i++) {
-			if (ip)  colors[count] = ipcam.get(i*pixelSize, j*pixelSize);
-			if (usb) colors[count] = cam.get(i*pixelSize, j*pixelSize);	
-			if (!ip && !usb) colors[count] = mov.get(i*pixelSize, j*pixelSize);	
+	for (int j = 0; j < ypixels; j++) {
+		for (int i = 0; i < xpixels; i++) {
+			if (ip)  colors[count] = ipcam.get(i*pixelsize, j*pixelsize);
+			if (usb) colors[count] = cam.get(i*pixelsize, j*pixelsize);	
+			if (!ip && !usb) colors[count] = mov.get(i*pixelsize, j*pixelsize);	
 			count++;
 		}
 	}
 
 	// sort
 
-	if (sort) {
-		// colors = sort(colors,sortProgress%(pixels-1));
-		colors = sort(colors);
+	if (display) {
+		pixelmap = sort(pixelmap);
+		display = !display;
 	}
 
-	if (shuffle) {
-		shuffleArray(colors);
+	if (sort) {
+		// colors = sort(colors,sortprogress%(pixels-1));
+		// colors = sort(colors);
+		// pixelmap = sort(pixelmap);
+		sort = !sort;
+	}
+
+	if (kunthshuffle) {
+		shuffleArray(pixelmap);
+		kunthshuffle = !kunthshuffle;
 	}
 
 	// display
 
-	for (int j = 0; j < pixelsH; j++) {
-    	for (int i = 0; i < pixelsW; i++) {
-			// fill(colors[j*pixelsW + i]);
-			// fill(colors[j*pixelsW + i], alpha);
-			// fill(red(colors[j*pixelsW + i]),0,0,alpha);
-			// fill(hue(colors[j*pixelsW + i]),255,brightness(colors[j*pixelsW + i]),alpha);
-			// fill(hue(colors[j*pixelsW + i]), 255, 255, alpha);
-			// fill(hue(colors[j*pixelsW + i]), hue(colors[j*pixelsW + i]), hue(colors[j*pixelsW + i]), alpha);
-			// fill(brightness(colors[j*pixelsW + i]), brightness(colors[j*pixelsW + i]), brightness(colors[j*pixelsW + i]), alpha);
-			// fill(saturation(colors[j*pixelsW + i]), saturation(colors[j*pixelsW + i]), saturation(colors[j*pixelsW + i]), alpha);
-			fill(hue(colors[j*pixelsW + i]), saturation(colors[j*pixelsW + i]), brightness(colors[j*pixelsW + i]), alpha);
-			rect(i*pixelSize*scale, j*pixelSize*scale, pixelSize*scale, pixelSize*scale);
-			// rect(i*pixelSize*scale, j*pixelSize*scale, pixelSize/2, pixelSize/2);
+	for (int j = 0; j < ypixels; j++) {
+    	for (int i = 0; i < xpixels; i++) {
+
+			fill(hue(colors[pixelmap[j*xpixels + i]]), saturation(colors[pixelmap[j*xpixels + i]]), brightness(colors[pixelmap[j*xpixels + i]]), alpha);
+			// fill(hue(colors[pixelmap[j*xpixels + i]]), saturation(colors[pixelmap[j*xpixels + i]])*3, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
+			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, 255, alpha);
+			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
+
+			rect(i*pixelsize*scale, j*pixelsize*scale, pixelsize*scale, pixelsize*scale);
 		}
   	}
 
@@ -113,9 +133,11 @@ void draw() {
 
 	// * debug *
 
+	// printArray(pixelmap);
 	// printArray(colors);
 	// println("colors[0] " + hex(colors[0]) );
-	// println("colors[0] " + binary(colors[0]) );
+	// println("colors[0]   " + binary(colors[0]) );
+	// println("pixelmap[0] " + binary(pixelmap[0]) );
 }
 
 void shuffleArray(int[] array) {
@@ -144,11 +166,14 @@ void shuffleArray(int[] array) {
 
 void keyPressed() {
   	switch(key) {
+		case 'd':  
+			display = !display;		
+    		break;
 		case 's':  
 			sort = !sort;		
     		break;
-		case 'h':  
-			shuffle = !shuffle;		
+		case 'k':  
+			kunthshuffle = !kunthshuffle;		
     		break;
 		default:
     		break;
