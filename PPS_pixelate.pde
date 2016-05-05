@@ -2,10 +2,6 @@
 // O-R-G
 // requires https://github.com/singintime/ipcapture
 
-// ** fix ** float scale
-
-// ** todo ** add cycle shuffle
-
 // ** todo ** sort using bit shifting to get specific color values
 // ** todo ** implement byte reader
 // ** todo ** examine asdf pixelsort
@@ -36,14 +32,14 @@ int pixels, ypixels, xpixels;
 int pixelsize = 8;
 int sortprogress;
 int alpha = 50;					// [0-255]
+float scale = 1.0;				// scale video input
 float sortspeed = 5.0;
-float scale = 1.0;	// ** fix **
 String ipsrc = "http://192.168.1.21/live";	
 String usbsrc = "FaceTime HD Camera (Display)";	
 String movsrc = "broadway-slow.mov";
 
 void setup() {
-  	size(640, 360);
+	size(640, 360);
 	frameRate(60);
 	colorMode(HSB, 255);
   	noStroke();
@@ -85,7 +81,7 @@ void draw() {
 		}
 	}
 
-	// sort
+	// adjust pixelmap
 
 	if (display) {
 		pixelmap = sort(pixelmap);
@@ -100,7 +96,10 @@ void draw() {
 	}
 
 	if (kunthshuffle) {
-		knuthShuffle(pixelmap);
+		// knuthShuffle(pixelmap);
+		// knuthShuffleCycle(pixelmap, int(random(pixels)));
+		// knuthShuffle(pixelmap, 500, 829);
+		knuthShuffle(pixelmap, int(random(pixels-1)), int(random(pixels)));
 		kunthshuffle = !kunthshuffle;
 	}
 
@@ -130,23 +129,10 @@ void draw() {
 	// println("pixelmap[0] " + binary(pixelmap[0]) );
 }
 
-void knuthShuffle(int[] array) {
- 
-	// *note* -- when an array is passed to a function,
-	// it is passed as a memory location not as data 
-	// so actions transform the original variable directly
-	// to act on the array's data and return a new array,
-	// then the function must be typed, array data copied,
-	// and a new array returned at the end.
+void knuthShuffle(int[] array, int min, int max) {
 
-	// knuth shuffle
-	// https://en.wikipedia.org/wiki/Fisher–Yates_shuffle
-
-	// ** todo ** add parameter to shuffle only part of an array
-
-  	for (int i = array.length; i > 1; i--) {
- 
-		int j = int(random(i));
+  	for (int i = max; i > min; i--) {
+		int j = int(random(min,max));
      	int tmp = array[j];
 		array[j] = array[i-1];
 		array[i-1] = tmp;
@@ -154,8 +140,6 @@ void knuthShuffle(int[] array) {
 }
 
 void setResolution(int thispixelsize) {
-
- 	// adjust resolution, reset display variables
 
 	pixelsize = thispixelsize;
 	if (pixelsize == 0) pixelsize = 1; 
@@ -169,8 +153,8 @@ void setResolution(int thispixelsize) {
 	}
 }
 
-
 void keyPressed() {
+
   	switch(key) {
 		case 'd':  
 			display = !display;		
@@ -186,6 +170,7 @@ void keyPressed() {
 			setResolution(pixelsize+1);
     		break;
 		case '-': 		// pixelsize--
+		case '_':
 			setResolution(pixelsize-1);
     		break;
 		default:
