@@ -2,12 +2,15 @@
 // O-R-G
 // requires https://github.com/singintime/ipcapture
 
+// ** fix ** float scale
+
+// ** todo ** add cycle shuffle
+
 // ** todo ** sort using bit shifting to get specific color values
 // ** todo ** implement byte reader
 // ** todo ** examine asdf pixelsort
 // ** todo ** exchange random image rows?
 // ** todo ** add keydown control
-// ** fix ** float scale
 // ** fix ** pjava export always copies java
 
 // build array which maps pixel locations
@@ -25,7 +28,7 @@ color colors[];					// raw pixel color vals
 int pixelmap[];					// pixel display mapping
 
 boolean ip = false;				// ip cam 
-boolean usb = true;				// usb cam
+boolean usb = false;			// usb cam
 boolean display = true;			// display pixels
 boolean sort = false;			// sort pixels
 boolean kunthshuffle = false;	// shuffle pixels
@@ -37,7 +40,7 @@ float sortspeed = 5.0;
 float scale = 1.0;	// ** fix **
 String ipsrc = "http://192.168.1.21/live";	
 String usbsrc = "FaceTime HD Camera (Display)";	
-String movsrc = "basement.mov";
+String movsrc = "broadway-slow.mov";
 
 void setup() {
   	size(640, 360);
@@ -62,20 +65,7 @@ void setup() {
 	  	mov.loop();
 	} 
 
-  	xpixels = width / pixelsize;
-  	ypixels = height / pixelsize;
-  	pixels = xpixels * ypixels;
-  	colors = new color[pixels];
-  	println("Pixels : " + pixels);
-
-	// init pixelmap[]
-
-	pixelmap = new int[pixels];
-
-	for (int i = 0; i < pixelmap.length; i++) {
-		pixelmap[i] = i;
-	}
-	printArray(pixelmap);
+	setResolution(pixelsize);
 }
 
 void draw() {
@@ -110,7 +100,7 @@ void draw() {
 	}
 
 	if (kunthshuffle) {
-		shuffleArray(pixelmap);
+		knuthShuffle(pixelmap);
 		kunthshuffle = !kunthshuffle;
 	}
 
@@ -140,7 +130,7 @@ void draw() {
 	// println("pixelmap[0] " + binary(pixelmap[0]) );
 }
 
-void shuffleArray(int[] array) {
+void knuthShuffle(int[] array) {
  
 	// *note* -- when an array is passed to a function,
 	// it is passed as a memory location not as data 
@@ -163,6 +153,22 @@ void shuffleArray(int[] array) {
 	}
 }
 
+void setResolution(int thispixelsize) {
+
+ 	// adjust resolution, reset display variables
+
+	pixelsize = thispixelsize;
+	if (pixelsize == 0) pixelsize = 1; 
+	xpixels = width / pixelsize;
+	ypixels = height / pixelsize;
+	pixels = xpixels * ypixels;
+	colors = new color[pixels];
+	pixelmap = new int[pixels];
+	for (int i = 0; i < pixelmap.length; i++) {
+		pixelmap[i] = i;
+	}
+}
+
 
 void keyPressed() {
   	switch(key) {
@@ -174,6 +180,13 @@ void keyPressed() {
     		break;
 		case 'k':  
 			kunthshuffle = !kunthshuffle;		
+    		break;
+		case '+':  		// pixelsize++
+		case '=':
+			setResolution(pixelsize+1);
+    		break;
+		case '-': 		// pixelsize--
+			setResolution(pixelsize-1);
     		break;
 		default:
     		break;
