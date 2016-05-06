@@ -2,6 +2,7 @@
 // O-R-G
 // requires https://github.com/singintime/ipcapture
 
+// ** todo ** write sort
 // ** todo ** sort using bit shifting to get specific color values
 // ** todo ** implement byte reader
 // ** todo ** examine asdf pixelsort
@@ -24,10 +25,10 @@ color colors[];					// raw pixel color vals
 int pixelmap[];					// pixel display mapping
 
 boolean ip = false;				// ip cam 
-boolean usb = false;			// usb cam
+boolean usb = true;				// usb cam
 boolean display = true;			// display pixels
 boolean sort = false;			// sort pixels
-boolean kunthshuffle = false;	// shuffle pixels
+boolean knuthshuffle = false;	// shuffle pixels
 int pixels, ypixels, xpixels;
 int pixelsize = 8;
 int sortprogress;
@@ -35,13 +36,15 @@ int alpha = 50;					// [0-255]
 float scale = 1.0;				// scale video input
 float sortspeed = 5.0;
 String ipsrc = "http://192.168.1.21/live";	
-String usbsrc = "FaceTime HD Camera (Display)";	
+// String usbsrc = "FaceTime HD Camera (Display)";	
+String usbsrc = "FaceTime Camera (Built-in)";	
 String movsrc = "broadway-slow.mov";
 
 void setup() {
 	size(640, 360);
+	// size(1280, 720);
 	frameRate(60);
-	colorMode(HSB, 255);
+	// colorMode(HSB, 255);
   	noStroke();
 	background(0);
 
@@ -90,17 +93,15 @@ void draw() {
 
 	if (sort) {
 		// colors = sort(colors,sortprogress%(pixels-1));
-		// colors = sort(colors);
-		// pixelmap = sort(pixelmap);
-		sort = !sort;
+		pixelmap = sort(pixelmap);
+		colors = sort(colors);
+		// sort = !sort;
 	}
 
-	if (kunthshuffle) {
-		// knuthShuffle(pixelmap);
-		// knuthShuffleCycle(pixelmap, int(random(pixels)));
-		// knuthShuffle(pixelmap, 500, 829);
-		knuthShuffle(pixelmap, int(random(pixels-1)), int(random(pixels)));
-		kunthshuffle = !kunthshuffle;
+	if (knuthshuffle) {
+		knuthShuffle(pixelmap, 0, pixels);
+		// knuthShuffle(pixelmap, int(random(pixels-1)), int(random(pixels)));
+		// knuthshuffle = !knuthshuffle;
 	}
 
 	// display
@@ -109,25 +110,31 @@ void draw() {
     	for (int i = 0; i < xpixels; i++) {
 
 			fill(hue(colors[pixelmap[j*xpixels + i]]), saturation(colors[pixelmap[j*xpixels + i]]), brightness(colors[pixelmap[j*xpixels + i]]), alpha);
-			// fill(hue(colors[pixelmap[j*xpixels + i]]), saturation(colors[pixelmap[j*xpixels + i]])*3, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, 255, alpha);
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
-
+			// fill(hue(colors[pixelmap[j*xpixels + i]]), 0, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
+			// fill(hue(colors[pixelmap[j*xpixels + i]]), brightness(colors[pixelmap[j*xpixels + i]]), 255, alpha);
 			rect(i*pixelsize*scale, j*pixelsize*scale, pixelsize*scale, pixelsize*scale);
 		}
   	}
 
-	// ** todo ** write out to video
 	// saveFrame("out/frame-####.png");
 
-	// * debug *
-
 	// printArray(pixelmap);
+	// println(colors);
 	// printArray(colors);
 	// println("colors[0] " + hex(colors[0]) );
+	// println("red(colors[0])   " + red(colors[0]) );
 	// println("colors[0]   " + binary(colors[0]) );
-	// println("pixelmap[0] " + binary(pixelmap[0]) );
+	// println("colors[0]   " + int(binary(colors[0] >> 16 & 0xFF)));
+	// println("pixelmap[0] " + binary(pixelmap[0]));
 }
+
+
+
+
+
+
 
 void knuthShuffle(int[] array, int min, int max) {
 
@@ -138,6 +145,19 @@ void knuthShuffle(int[] array, int min, int max) {
 		array[i-1] = tmp;
 	}
 }
+
+/*
+// in process 
+void shiftArray(int[] array, int min, int max) {
+
+  	for (int i = max; i > min; i--) {
+		int j = int(random(min,max));
+     	int tmp = array[j];
+		array[j] = array[i-1];
+		array[i-1] = tmp;
+	}
+}
+*/
 
 void setResolution(int thispixelsize) {
 
@@ -163,15 +183,23 @@ void keyPressed() {
 			sort = !sort;		
     		break;
 		case 'k':  
-			kunthshuffle = !kunthshuffle;		
+			knuthshuffle = !knuthshuffle;		
     		break;
 		case '+':  		// pixelsize++
-		case '=':
 			setResolution(pixelsize+1);
+			println("pixelsize : " + pixelsize);
     		break;
-		case '-': 		// pixelsize--
-		case '_':
+		case '_': 		// pixelsize--
 			setResolution(pixelsize-1);
+			println("pixelsize : " + pixelsize);
+    		break;
+		case '=':
+			if (alpha + 1 < 255) alpha++;
+			println("alpha : " + alpha);
+    		break;
+		case '-':
+			if (alpha - 1 > 0) alpha--;
+			println("alpha : " + alpha);
     		break;
 		default:
     		break;
