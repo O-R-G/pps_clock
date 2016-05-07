@@ -2,6 +2,8 @@
 // O-R-G
 // requires https://github.com/singintime/ipcapture
 
+// ** todo ** fix sortColumns()
+// ** todo ** fix sortRows()
 // ** todo ** write sort
 // ** todo ** sort using bit shifting to get specific color values
 // ** todo ** implement byte reader
@@ -26,25 +28,28 @@ int pixelmap[];					// pixel display mapping
 
 boolean ip = false;				// ip cam 
 boolean usb = true;				// usb cam
-boolean display = true;			// display pixels
-boolean sort = false;			// sort pixels
-boolean knuthshuffle = false;	// shuffle pixels
+boolean hsb = false;				// enforce HSB color model
+boolean sort = false;				// sort pixels
+boolean sortrows = false;			// sort rows, alternating
+boolean sortcolumns = false;			// sort columns (messed up)
+boolean knuthshuffle = false;		// shuffle pixels
 int pixels, ypixels, xpixels;
-int pixelsize = 8;
+int pixelsize = 4;
 int sortprogress;
-int alpha = 50;					// [0-255]
-float scale = 1.0;				// scale video input
-float sortspeed = 5.0;
+int alpha = 50;						// [0-255]
+float scale = 1.0;					// scale video input
+float sortspeed = 100.0;
 String ipsrc = "http://192.168.1.21/live";	
+String usbsrc = "HD USB Camera";	
 // String usbsrc = "FaceTime HD Camera (Display)";	
-String usbsrc = "FaceTime Camera (Built-in)";	
+// String usbsrc = "FaceTime Camera (Built-in)";	
 String movsrc = "broadway-slow.mov";
 
 void setup() {
 	size(640, 360);
 	// size(1280, 720);
 	frameRate(60);
-	// colorMode(HSB, 255);
+	// if (hsb) colorMode(HSB, 255);
   	noStroke();
 	background(0);
 
@@ -54,7 +59,6 @@ void setup() {
 		ipcam.start();
 	} else if (usb) {
 	  	println("Using usb camera . . . ");
-		// println("Available cameras . . . ");
 		// printArray(Capture.list());
 	    cam = new Capture(this, 640, 360, usbsrc, 30);
     	cam.start();     
@@ -69,8 +73,6 @@ void setup() {
 
 void draw() {
 
-	sortprogress+=sortspeed;
-
 	if (ip && ipcam.isAvailable()) ipcam.read();
 	if (usb && cam.available()) cam.read();
 	if (!ip && !usb && mov.available()) mov.read();
@@ -84,32 +86,38 @@ void draw() {
 		}
 	}
 
-	// adjust pixelmap
+	// adjust colors, pixelmap
 
-	if (display) {
-		pixelmap = sort(pixelmap);
-		display = !display;
-	}
+	if (sortprogress < pixels-1) sortprogress+=sortspeed;
 
 	if (sort) {
-		// colors = sort(colors,sortprogress%(pixels-1));
-		pixelmap = sort(pixelmap);
 		colors = sort(colors);
-		// sort = !sort;
+		// colors = reverse(sort(colors, sortprogress));
+		// colors = sort(colors, sortprogress);
+	}
+
+	if (sortrows) {
+		sortRows(colors, ypixels);
+	}
+
+	if (sortcolumns) {
+		sortColumns(colors, xpixels);
 	}
 
 	if (knuthshuffle) {
 		knuthShuffle(pixelmap, 0, pixels);
+		// knuthShuffle(pixelmap, 0, sortprogress);
 		// knuthShuffle(pixelmap, int(random(pixels-1)), int(random(pixels)));
-		// knuthshuffle = !knuthshuffle;
-	}
+	} 
+
+	if (!knuthshuffle) pixelmap = sort(pixelmap);
 
 	// display
 
 	for (int j = 0; j < ypixels; j++) {
     	for (int i = 0; i < xpixels; i++) {
-
-			fill(hue(colors[pixelmap[j*xpixels + i]]), saturation(colors[pixelmap[j*xpixels + i]]), brightness(colors[pixelmap[j*xpixels + i]]), alpha);
+			// fill(hue(colors[pixelmap[j*xpixels + i]]), saturation(colors[pixelmap[j*xpixels + i]]), brightness(colors[pixelmap[j*xpixels + i]]), alpha);
+			fill(red(colors[pixelmap[j*xpixels + i]]), green(colors[pixelmap[j*xpixels + i]]), blue(colors[pixelmap[j*xpixels + i]]), alpha);
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, 255, alpha);
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 0, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
@@ -159,6 +167,48 @@ void shiftArray(int[] array, int min, int max) {
 }
 */
 
+void sortRows(int[] array, int rows) {
+
+	int[] imgBuffer = new int[1];
+	int[] rowBuffer = new int[xpixels];
+	boolean odd = true;
+
+    for (int j = 0; j < ypixels; j++) {
+        for (int i = 0; i < xpixels; i++) {
+			rowBuffer[i] = colors[j*xpixels + i];
+		}
+		rowBuffer = sort(rowBuffer);
+		if (odd) rowBuffer = reverse(rowBuffer);
+		imgBuffer = concat(imgBuffer,rowBuffer);
+		odd = !odd;
+	}
+	imgBuffer = shorten(imgBuffer);
+	arrayCopy(imgBuffer, array);	// works directly on data
+}
+
+void sortColumns(int[] array, int columns) {
+
+	// not correct, but perhaps interesting
+
+	int[] imgBuffer = new int[1];
+	int[] colBuffer = new int[ypixels];
+	boolean odd = true;
+
+    for (int j = 0; j < xpixels; j++) {
+        for (int i = 0; i < ypixels; i++) {
+			colBuffer[i] = colors[j*ypixels + i];
+		}
+		colBuffer = sort(colBuffer);
+		if (odd) colBuffer = reverse(colBuffer);
+		imgBuffer = concat(imgBuffer,colBuffer);
+		odd = !odd;
+	}
+	imgBuffer = shorten(imgBuffer);
+	arrayCopy(imgBuffer, array);
+}
+
+
+
 void setResolution(int thispixelsize) {
 
 	pixelsize = thispixelsize;
@@ -176,14 +226,26 @@ void setResolution(int thispixelsize) {
 void keyPressed() {
 
   	switch(key) {
-		case 'd':  
-			display = !display;		
+		case ' ':
+			hsb = !hsb;
+			if (hsb) colorMode(HSB, 255);
+			if (!hsb) colorMode(RGB, 255);
     		break;
-		case 's':  
-			sort = !sort;		
+		case 's':
+			sort = !sort;
+			sortprogress = 0;
+    		break;
+		case 'r':
+			sortrows = !sortrows;
+			sortprogress = 0;
+    		break;
+		case 'c':
+			sortcolumns = !sortcolumns;
+			sortprogress = 0;
     		break;
 		case 'k':  
-			knuthshuffle = !knuthshuffle;		
+			knuthshuffle = !knuthshuffle;
+			sortprogress = 0;
     		break;
 		case '+':  		// pixelsize++
 			setResolution(pixelsize+1);
