@@ -23,27 +23,29 @@ Movie mov;
 Capture cam;
 IPCapture ipcam;
 
-color colors[];					// raw pixel color vals
-int pixelmap[];					// pixel display mapping
+color colors[];						// raw pixel color vals
+int pixelmap[];						// pixel display mapping
 
-boolean ip = false;				// ip cam 
-boolean usb = true;				// usb cam
+boolean ip = false;					// ip cam 
+boolean usb = true;					// usb cam
 boolean hsb = false;				// enforce HSB color model
 boolean sort = false;				// sort pixels
-boolean sortrows = false;			// sort rows, alternating
-boolean sortcolumns = false;			// sort columns (messed up)
-boolean knuthshuffle = false;		// shuffle pixels
+boolean sortrows;					// sort rows, alternating
+boolean sortcolumns;				// sort columns (messed up)
+boolean shiftarray;					// linear shift, ring buffer
+boolean knuthshuffle;				// shuffle pixels
 int pixels, ypixels, xpixels;
 int pixelsize = 4;
 int sortprogress;
 int alpha = 50;						// [0-255]
+int shiftarrayamt;
 float scale = 1.0;					// scale video input
 float sortspeed = 100.0;
 String ipsrc = "http://192.168.1.21/live";	
-String usbsrc = "HD USB Camera";	
+// String usbsrc = "HD USB Camera";	
 // String usbsrc = "FaceTime HD Camera (Display)";	
-// String usbsrc = "FaceTime Camera (Built-in)";	
-String movsrc = "broadway-slow.mov";
+String usbsrc = "FaceTime Camera (Built-in)";	
+String movsrc = "basement.mov";
 
 void setup() {
 	size(640, 360);
@@ -66,7 +68,7 @@ void setup() {
   		println("Using local mov . . . ");
 		mov = new Movie(this, movsrc);
 	  	mov.loop();
-	} 
+	}
 
 	setResolution(pixelsize);
 }
@@ -104,7 +106,13 @@ void draw() {
 		sortColumns(colors, xpixels);
 	}
 
+	if (shiftarray) {
+		shiftarrayamt+=10;
+		// shiftarrayamt = shiftArray(pixelmap, shiftarrayamt, 10,);
+	}
+
 	if (knuthshuffle) {
+
 		knuthShuffle(pixelmap, 0, pixels);
 		// knuthShuffle(pixelmap, 0, sortprogress);
 		// knuthShuffle(pixelmap, int(random(pixels-1)), int(random(pixels)));
@@ -117,7 +125,14 @@ void draw() {
 	for (int j = 0; j < ypixels; j++) {
     	for (int i = 0; i < xpixels; i++) {
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), saturation(colors[pixelmap[j*xpixels + i]]), brightness(colors[pixelmap[j*xpixels + i]]), alpha);
-			fill(red(colors[pixelmap[j*xpixels + i]]), green(colors[pixelmap[j*xpixels + i]]), blue(colors[pixelmap[j*xpixels + i]]), alpha);
+			// fill(red(colors[pixelmap[j*xpixels + i]]), green(colors[pixelmap[j*xpixels + i]]), blue(colors[pixelmap[j*xpixels + i]]), alpha);
+
+			int index = (j * xpixels + i + shiftarrayamt) % pixels;
+
+			fill(red(colors[pixelmap[index]]), green(colors[pixelmap[index]]), blue(colors[pixelmap[index]]), alpha);
+	
+			// fill(red(colors[pixelmap[(j*xpixels + i + shiftarrayamt) % pixels]]));
+
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, 255, alpha);
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 0, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
@@ -146,6 +161,8 @@ void draw() {
 
 void knuthShuffle(int[] array, int min, int max) {
 
+	// acting directly on array, so no need to return any value
+
   	for (int i = max; i > min; i--) {
 		int j = int(random(min,max));
      	int tmp = array[j];
@@ -153,19 +170,40 @@ void knuthShuffle(int[] array, int min, int max) {
 		array[i-1] = tmp;
 	}
 }
+
+public int shiftArray(int[] array, int amt, int offset) {
+	// either:	
+	// 1. assign global shift amt, which is incremented and % when read
+	// 2. arrayCopy to modify pixelmap
+
+	// splice last amt items into beginning of the array
+	// shorten the array by amt
+	// acting directly on array, so no need to return any value
+
+	offset+=amt;
 
 /*
-// in process 
-void shiftArray(int[] array, int min, int max) {
-
-  	for (int i = max; i > min; i--) {
-		int j = int(random(min,max));
-     	int tmp = array[j];
-		array[j] = array[i-1];
-		array[i-1] = tmp;
+	for (int i = 0; i < pixels/8; i++) {
+		int tmp = array[i]; // get discrete value
+		println(tmp);
+		array = splice(array, tmp, 0);
+		println(array);
+		// ** fix ** can also splice in arrays in total
+		// see https://processing.org/reference/splice_.html
+		// array = splice(array, array[10], 0);
+		array = shorten(array);
+		println(array.length);
+		exit();
 	}
-}
 */
+
+	shiftarray = true;
+	return offset;
+}
+
+void sortArray(int[] array, int min, int max) {
+	// todo
+}
 
 void sortRows(int[] array, int rows) {
 
@@ -209,6 +247,8 @@ void sortColumns(int[] array, int columns) {
 
 
 
+
+
 void setResolution(int thispixelsize) {
 
 	pixelsize = thispixelsize;
@@ -245,6 +285,10 @@ void keyPressed() {
     		break;
 		case 'k':  
 			knuthshuffle = !knuthshuffle;
+			sortprogress = 0;
+    		break;
+		case 'h':
+			shiftarray = !shiftarray;
 			sortprogress = 0;
     		break;
 		case '+':  		// pixelsize++
