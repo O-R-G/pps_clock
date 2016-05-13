@@ -141,7 +141,8 @@ void draw()
 
 	if (sortcolumns)
 	{
-		sortColumns(colors, xpixels);
+		// sortColumns(colors, xpixels);
+		plist = sortPlistCols(plist, ypixels);
 	}
 
 	if (shiftarray)
@@ -169,6 +170,7 @@ void draw()
 			int index = (j * xpixels + i + shiftarrayamt) % pixels;
             // colorMode(HSB, 255);
 			// fill(red(colors[pixelmap[index]]), green(colors[pixelmap[index]]), blue(colors[pixelmap[index]]), alpha);
+            c = colors[pixelmap[index]];
             c = plist.get(index).getColor();
             fill(red(c), green(c), blue(c));
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, 255, alpha);
@@ -303,9 +305,25 @@ void sortColumns(int[] array, int columns) {
 	arrayCopy(imgBuffer, array);
 }
 
-
-
-
+ArrayList<Pixel> sortPlistCols(ArrayList<Pixel> plist, int cols)
+{
+    ArrayList<Pixel> sorted, row;
+    sorted = new ArrayList<Pixel>();
+    
+     for (int j = 0; j < xpixels; j++)
+     {
+        row = new ArrayList<Pixel>();
+        for (int i = 0; i < ypixels; i++)
+        {
+            row.add(plist.get(j * ypixels + i));
+        }
+        Collections.sort(row, new PixelComparator());
+        if (j % 2 == 0)
+            Collections.reverse(row);
+        sorted.addAll(row);
+     }
+     return sorted;
+}
 
 void setResolution(int thispixelsize) {
 
