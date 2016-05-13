@@ -18,6 +18,8 @@
 
 import processing.video.*;
 import ipcapture.*;
+import java.util.Collections;
+import java.util.Comparator;
 
 Movie mov;
 Capture cam;
@@ -25,6 +27,7 @@ IPCapture ipcam;
 
 color colors[];						// raw pixel color vals
 int pixelmap[];						// pixel display mapping
+ArrayList<Pixel> plist;
 
 boolean ip = false;					// ip cam 
 boolean usb = true;					// usb cam
@@ -44,27 +47,36 @@ float sortspeed = 100.0;
 String ipsrc = "http://192.168.1.21/live";	
 // String usbsrc = "HD USB Camera";	
 // String usbsrc = "FaceTime HD Camera (Display)";	
-String usbsrc = "FaceTime Camera (Built-in)";	
+// String usbsrc = "FaceTime Camera (Built-in)";
+String usbsrc = "FaceTime HD Camera";
 String movsrc = "basement.mov";
 
+public void settings() {
+    size(640, 360);
+}
 void setup() {
-	size(640, 360);
+	// size(640, 360);
 	// size(1280, 720);
 	frameRate(60);
 	// if (hsb) colorMode(HSB, 255);
   	noStroke();
 	background(0);
 
-	if (ip) {
+	if (ip)
+	{
 	  	println("Using ip camera . . . ");
 		ipcam = new IPCapture(this, ipsrc, "", "");
 		ipcam.start();
-	} else if (usb) {
+	} 
+	else if (usb) 
+	{
 	  	println("Using usb camera . . . ");
 		// printArray(Capture.list());
 	    cam = new Capture(this, 640, 360, usbsrc, 30);
     	cam.start();     
-	} else {
+	} 
+	else
+	{
   		println("Using local mov . . . ");
 		mov = new Movie(this, movsrc);
 	  	mov.loop();
@@ -73,41 +85,68 @@ void setup() {
 	setResolution(pixelsize);
 }
 
-void draw() {
-
-	if (ip && ipcam.isAvailable()) ipcam.read();
-	if (usb && cam.available()) cam.read();
-	if (!ip && !usb && mov.available()) mov.read();
+void draw()
+{
+    int x, y;
+    color c;
+    
+	if (ip && ipcam.isAvailable())
+	    ipcam.read();
+	if (usb && cam.available())
+	    cam.read();
+	if (!ip && !usb && mov.available())
+	    mov.read();
 	int count = 0;
-	for (int j = 0; j < ypixels; j++) {
-		for (int i = 0; i < xpixels; i++) {
-			if (ip)  colors[count] = ipcam.get(i*pixelsize, j*pixelsize);
-			if (usb) colors[count] = cam.get(i*pixelsize, j*pixelsize);	
-			if (!ip && !usb) colors[count] = mov.get(i*pixelsize, j*pixelsize);	
+	
+	plist = new ArrayList<Pixel>();
+	for (int j = 0; j < ypixels; j++)
+	{
+	    y = j * pixelsize;
+		for (int i = 0; i < xpixels; i++)
+		{
+		    x = i * pixelsize;
+		    
+			if (ip) 
+			    c = ipcam.get(x, y);
+			else if (usb)
+                c = cam.get(x, y);
+			else
+			    c = mov.get(i*pixelsize, j*pixelsize);
+
+			colors[count] = c;
+            plist.add(new Pixel(c));
+			
 			count++;
 		}
 	}
 
 	// adjust colors, pixelmap
 
-	if (sortprogress < pixels-1) sortprogress+=sortspeed;
+	if (sortprogress < pixels - 1) 
+	    sortprogress += sortspeed;
 
-	if (sort) {
-		colors = sort(colors);
+	if (sort)
+	{
+		// colors = sort(colors);
+		Collections.sort(plist, new SaturationComparator());
 		// colors = reverse(sort(colors, sortprogress));
 		// colors = sort(colors, sortprogress);
 	}
 
-	if (sortrows) {
-		sortRows(colors, ypixels);
+	if (sortrows)
+	{
+		// sortRows(colors, ypixels);
+		plist = sortPlistRows(plist, ypixels);
 	}
 
-	if (sortcolumns) {
+	if (sortcolumns)
+	{
 		sortColumns(colors, xpixels);
 	}
 
-	if (shiftarray) {
-		shiftarrayamt+=10;
+	if (shiftarray)
+	{
+		shiftarrayamt += 1;
 		// shiftarrayamt = shiftArray(pixelmap, shiftarrayamt, 10,);
 	}
 
@@ -121,16 +160,17 @@ void draw() {
 	if (!knuthshuffle) pixelmap = sort(pixelmap);
 
 	// display
-
+    // color c;
 	for (int j = 0; j < ypixels; j++) {
     	for (int i = 0; i < xpixels; i++) {
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), saturation(colors[pixelmap[j*xpixels + i]]), brightness(colors[pixelmap[j*xpixels + i]]), alpha);
 			// fill(red(colors[pixelmap[j*xpixels + i]]), green(colors[pixelmap[j*xpixels + i]]), blue(colors[pixelmap[j*xpixels + i]]), alpha);
 
 			int index = (j * xpixels + i + shiftarrayamt) % pixels;
-
-			fill(red(colors[pixelmap[index]]), green(colors[pixelmap[index]]), blue(colors[pixelmap[index]]), alpha);
-
+            // colorMode(HSB, 255);
+			// fill(red(colors[pixelmap[index]]), green(colors[pixelmap[index]]), blue(colors[pixelmap[index]]), alpha);
+            c = plist.get(index).getColor();
+            fill(red(c), green(c), blue(c));
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, 255, alpha);
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 0, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
@@ -220,6 +260,26 @@ void sortRows(int[] array, int rows) {
 	}
 	imgBuffer = shorten(imgBuffer);
 	arrayCopy(imgBuffer, array);	// works directly on data
+}
+
+ArrayList<Pixel> sortPlistRows(ArrayList<Pixel> plist, int rows)
+{
+    ArrayList<Pixel> sorted, row;
+    sorted = new ArrayList<Pixel>();
+    
+     for (int j = 0; j < ypixels; j++)
+     {
+        row = new ArrayList<Pixel>();
+        for (int i = 0; i < xpixels; i++)
+        {
+            row.add(plist.get(j * xpixels + i));
+        }
+        Collections.sort(row, new PixelComparator());
+        if (j % 2 == 0)
+            Collections.reverse(row);
+        sorted.addAll(row);
+     }
+     return sorted;
 }
 
 void sortColumns(int[] array, int columns) {
