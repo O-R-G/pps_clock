@@ -130,8 +130,6 @@ void draw() {
 			int index = (j * xpixels + i + shiftarrayamt) % pixels;
 
 			fill(red(colors[pixelmap[index]]), green(colors[pixelmap[index]]), blue(colors[pixelmap[index]]), alpha);
-	
-			// fill(red(colors[pixelmap[(j*xpixels + i + shiftarrayamt) % pixels]]));
 
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, 255, alpha);
 			// fill(hue(colors[pixelmap[j*xpixels + i]]), 255, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
