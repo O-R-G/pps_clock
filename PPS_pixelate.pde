@@ -1,6 +1,5 @@
 // Public Private Secret Clock
 // O-R-G
-// requires https://github.com/singintime/ipcapture
 
 // ** todo ** fix sortColumns()
 // ** todo ** fix sortRows()
@@ -17,20 +16,16 @@
 // could be dynamically resized
 
 import processing.video.*;
-import ipcapture.*;
 import java.util.Collections;
 import java.util.Comparator;
 
 Movie mov;
 Capture cam;
-IPCapture ipcam;
 
-
-boolean ip = false;                 // ip cam 
 boolean usb = true;                 // usb cam
 
-boolean hsb = false;                // enforce HSB color model
-boolean sort = false;               // sort pixels
+boolean hsb;                		// enforce HSB color model
+boolean sort;  	 		            // sort pixels
 boolean sortrows;                   // sort rows, alternating
 boolean sortrowswonky;
 boolean sortcolsvhs;
@@ -48,8 +43,7 @@ int shiftarrayamt;
 float scale = 1.0;                  // scale video input
 float sortspeed = 100.0;
 
-String ipsrc = "http://192.168.1.21/live";
-String usbsrc = Capture.list()[0];
+String usbsrc = Capture.list()[15];	// [0] 
 String movsrc = "basement.mov";
 
 PixelComparator comp;
@@ -83,13 +77,7 @@ void setup()
     background(0);
     
     // start the cameras
-    if (ip)
-    {
-        println("Using ip camera . . . ");
-        ipcam = new IPCapture(this, ipsrc, "", "");
-        ipcam.start();
-    } 
-    else if (usb)
+	if (usb)
     {
         println("Using usb camera . . . ");
         // printArray(Capture.list());
@@ -118,11 +106,9 @@ void draw()
     count = 0;
     pixels = new ArrayList<Pixel>();
     
-    if (ip && ipcam.isAvailable())
-        ipcam.read();
     if (usb && cam.available())
         cam.read();
-    if (!ip && !usb && mov.available())
+    if (!usb && mov.available())
         mov.read();
     
     for (int j = 0; j < ypixels; j++)
@@ -132,9 +118,7 @@ void draw()
         {
             x = i * pixelsize;
             
-            if (ip) 
-                c = ipcam.get(x, y);
-            else if (usb)
+            if (usb)
                 c = cam.get(x, y);
             else
                 c = mov.get(x, y);
@@ -189,24 +173,21 @@ void draw()
     } 
 
     // display
-    // color c;
     for (int j = 0; j < ypixels; j++) {
         for (int i = 0; i < xpixels; i++) {
-            // fill(hue(colors[pixelmap[j*xpixels + i]]), saturation(colors[pixelmap[j*xpixels + i]]), brightness(colors[pixelmap[j*xpixels + i]]), alpha);
-            // fill(red(colors[pixelmap[j*xpixels + i]]), green(colors[g[j*xpixels + i]]), blue(colors[pixelmap[j*xpixels + i]]), alpha);
-
             int index = (j * xpixels + i + shiftarrayamt) % numpixels;
-            
-            // fill(red(colors[pixelmap[index]]), green(colors[pixelmap[index]]), blue(colors[pixelmap[index]]), alpha);
-            c = pixels.get(index).getColor();
-            fill(red(c), green(c), blue(c), alpha);
-            
-            colorMode(HSB, 255);
-            fill(hue(c), 255, 255, alpha);
-            // fill(hue(colors[pixelmap[j*xpixels + i]]), 255, 255, alpha);
-            // fill(hue(colors[pixelmap[j*xpixels + i]]), 255, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
-            // fill(hue(colors[pixelmap[j*xpixels + i]]), 0, brightness(colors[pixelmap[j*xpixels + i]]), alpha);
-            // fill(hue(colors[pixelmap[j*xpixels + i]]), brightness(colors[pixelmap[j*xpixels + i]]), 255, alpha);
+			c = pixels.get(index).getColor();
+
+			// rgb 
+            // fill(red(c), green(c), blue(c), alpha);
+
+			// hsb, max s, b
+            // colorMode(HSB, 255);
+            // fill(hue(c), 255, 255, alpha);
+
+			// map hsb -> rgb
+            fill(hue(c), saturation(c), brightness(c), alpha);
+
             rect(i*pixelsize*scale, j*pixelsize*scale, pixelsize*scale, pixelsize*scale);
         }
     }
