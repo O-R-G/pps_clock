@@ -1,15 +1,11 @@
 // Public Private Secret Clock
 // O-R-G
 
-// ** todo ** fix sortColumns()
-// ** todo ** fix sortRows()
 // ** todo ** write sort
 // ** todo ** sort using bit shifting to get specific color values
 // ** todo ** implement byte reader
 // ** todo ** examine asdf pixelsort
 // ** todo ** exchange random image rows?
-// ** todo ** add keydown control
-// ** fix ** pjava export always copies java
 
 // build array which maps pixel locations
 // reset that map to show regular positions
@@ -43,7 +39,9 @@ int shiftarrayamt;
 float scale = 1.0;                  // scale video input
 float sortspeed = 100.0;
 
-String usbsrc = Capture.list()[15];	// [0] 
+// hardcoded much starts faster for dev
+String usbsrc = "FaceTime HD Camera (Display),size=640x360,fps=30";	
+// String usbsrc = Capture.list()[0];	// [0] 
 String movsrc = "basement.mov";
 
 PixelComparator comp;
@@ -53,19 +51,21 @@ public void settings()
 {
     int w, h;
     
-    if (usb)
-    {   
-        String[] arr = usbsrc.split(",");
-        String[] wh = arr[1].split("=")[1].split("x");
-        
-        w = Integer.parseInt(wh[0]);
-        h = Integer.parseInt(wh[1]);
-    }
-    else
-    {
-        w = 640;
-        h = 360; 
-    }
+	try 
+	{
+		usb = true;            
+		String[] arr = usbsrc.split(",");
+		String[] wh = arr[1].split("=")[1].split("x");
+       	w = Integer.parseInt(wh[0]);
+		h = Integer.parseInt(wh[1]);
+	} 
+	catch (Exception e) 
+	{
+		usb = false;
+		e.printStackTrace();
+		w = 640;
+		h = 360; 
+	}
 
     size(w, h);
 }
@@ -79,10 +79,19 @@ void setup()
     // start the cameras
 	if (usb)
     {
-        println("Using usb camera . . . ");
-        // printArray(Capture.list());
-        cam = new Capture(this, usbsrc);
-        cam.start();
+		try 
+		{
+        	cam = new Capture(this, usbsrc);
+        	cam.start();
+        	println("Using usb camera . . . ");
+        	println(usbsrc);
+		} 
+		catch (Exception e) 
+		{
+			usb = false;
+    		e.printStackTrace();
+			printArray(Capture.list());	
+  		}
     } 
     else
     {
@@ -92,7 +101,7 @@ void setup()
         mov.read();
         surface.setSize(mov.width, mov.height);
     }
-    
+
     setResolution(pixelsize);
     comp = new BrightnessComparator();
 }
