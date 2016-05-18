@@ -18,8 +18,7 @@ import java.util.Comparator;
 Movie mov;
 Capture cam;
 
-boolean usb = true;                 // usb cam
-
+boolean usb;                 		// usb cam
 boolean hsb;                		// enforce HSB color model
 boolean sort;  	 		            // sort pixels
 boolean sortrows;                   // sort rows, alternating
@@ -40,8 +39,10 @@ float scale = 1.0;                  // scale video input
 float sortspeed = 100.0;
 
 // hardcoded much starts faster for dev
-String usbsrc = "FaceTime HD Camera (Display),size=640x360,fps=30";	
+// String usbsrc = "FaceTime HD Camera (Display),size=640x360,fps=30";	
 // String usbsrc = Capture.list()[0];	// [0] 
+// String usbsrc = Capture.list()[12];	// [0] 
+String usbsrc = Capture.list()[30];	// [0] 
 String movsrc = "basement.mov";
 
 PixelComparator comp;
@@ -56,18 +57,33 @@ public void settings()
 		usb = true;            
 		String[] arr = usbsrc.split(",");
 		String[] wh = arr[1].split("=")[1].split("x");
-       	w = Integer.parseInt(wh[0]);
-		h = Integer.parseInt(wh[1]);
+       	w = int(wh[0]);
+       	h = int(wh[1]);
+		
+		/*
+		// only 360p or 720p
+
+		if ( w >= 640 && w < 1280) 
+			w = 640;
+		if ( w >+ 1280) 
+			w = 1280;
+		if ( h >= 360 && h < 720) 
+			h = 360;
+		if ( h >= 720) 
+			h = 720;
+		*/
+		// printArray(Capture.list());	
 	} 
 	catch (Exception e) 
 	{
 		usb = false;
 		e.printStackTrace();
 		w = 640;
-		h = 360; 
+		h = 360;
 	}
 
-    size(w, h);
+	size(1280,720);
+    // size(w, h);
 }
 
 void setup()
@@ -75,7 +91,7 @@ void setup()
     frameRate(60);
     noStroke();
     background(0);
-    
+
     // start the cameras
 	if (usb)
     {
