@@ -16,7 +16,12 @@ import java.util.Collections;
 import java.util.Comparator;
 
 Movie mov;
-Capture cam;
+Capture[] captures = new Capture[2];
+Capture capture;
+Capture captureNext;
+int cap = 0;
+int camSwitchInterval = 5; // units = minutes
+boolean canSwitchCam = false;
 
 boolean usb;                 		// usb cam
 boolean hsb;                		// enforce HSB color model
@@ -34,15 +39,11 @@ int pixelstep = 1;
 int sortprogress;
 int alpha = 50;                     // [0-255]
 int shiftarrayamt;
+int count = 0;
 
 float scale = 1.0;                  // scale video input
 float sortspeed = 100.0;
 
-// hardcoded much starts faster for dev
-// String usbsrc = "FaceTime HD Camera (Display),size=640x360,fps=30";	
-// String usbsrc = Capture.list()[0];	// [0] 
-// String usbsrc = Capture.list()[12];	// [0] 
-String usbsrc = Capture.list()[30];	// [0] 
 String movsrc = "basement.mov";
 
 PixelComparator comp;
@@ -54,25 +55,12 @@ public void settings()
     
 	try 
 	{
-		usb = true;            
-		String[] arr = usbsrc.split(",");
-		String[] wh = arr[1].split("=")[1].split("x");
-       	w = int(wh[0]);
-       	h = int(wh[1]);
+		usb = true;
 		
-		/*
-		// only 360p or 720p
-
-		if ( w >= 640 && w < 1280) 
-			w = 640;
-		if ( w >+ 1280) 
-			w = 1280;
-		if ( h >= 360 && h < 720) 
-			h = 360;
-		if ( h >= 720) 
-			h = 720;
-		*/
-		// printArray(Capture.list());	
+		// add cameras to capture list
+		// make sure captures array is the correct length!
+		captures[0] = new Capture(this, "name=HD USB Camera,size=1296x972,fps=30");
+		captures[1] = new Capture(this, "name=FaceTime HD Camera,size=1280x720,fps=30");
 	} 
 	catch (Exception e) 
 	{
@@ -81,14 +69,14 @@ public void settings()
 		w = 640;
 		h = 360;
 	}
-
+	
 	size(1280,720);
-    // size(w, h);
 }
 
 void setup()
 {
     frameRate(60);
+    // surface.setResizable(true);
     noStroke();
     background(0);
 
@@ -97,10 +85,9 @@ void setup()
     {
 		try 
 		{
-        	cam = new Capture(this, usbsrc);
-        	cam.start();
-        	println("Using usb camera . . . ");
-        	println(usbsrc);
+		    println("Using usb camera . . . ");
+            capture = captures[cap];
+        	captures[cap].start();
 		} 
 		catch (Exception e) 
 		{
@@ -125,14 +112,21 @@ void setup()
 void draw()
 {
     ArrayList<Pixel> pixels;
-    int x, y, count;
+    int x, y; // count;
     color c;
     
-    count = 0;
+    // count = 0;
+    count++;
+    if (usb && canSwitchCam && (minute() % camSwitchInterval == 0))
+    {  
+        capture.stop();
+        capture = captureNext;
+        canSwitchCam = false;
+    }
     pixels = new ArrayList<Pixel>();
     
-    if (usb && cam.available())
-        cam.read();
+    if (usb && capture.available())
+        capture.read();
     if (!usb && mov.available())
         mov.read();
     
@@ -144,7 +138,7 @@ void draw()
             x = i * pixelsize;
             
             if (usb)
-                c = cam.get(x, y);
+                c = capture.get(x, y);
             else
                 c = mov.get(x, y);
 
@@ -166,7 +160,6 @@ void draw()
     {
         pixels = sortCols(pixels);
     }
-    
         
     if (sortrows)
     {
@@ -182,7 +175,6 @@ void draw()
     {
         pixels = sortColsVHS(pixels);
     }
-
 
     if (shiftarray)
     {
@@ -227,6 +219,15 @@ void draw()
     // println("colors[0]   " + binary(colors[0]) );
     // println("colors[0]   " + int(binary(colors[0] >> 16 & 0xFF)));
     // println("pixelmap[0] " + binary(pixelmap[0]));
+    
+    if (usb && (!canSwitchCam) && (minute() % camSwitchInterval == camSwitchInterval - 1) && (second() > 40))
+    {  
+        cap++;
+        cap %= captures.length;
+        captureNext = captures[cap];
+        captureNext.start();
+        canSwitchCam = true;
+    }
 }
 
 void knuthShuffle(ArrayList<Pixel> pixels, int min, int max)
@@ -377,8 +378,10 @@ void keyPressed()
     {
         case ' ':
             hsb = !hsb;
-            if (hsb) colorMode(HSB, 255);
-            if (!hsb) colorMode(RGB, 255);
+            if (hsb)
+                colorMode(HSB, 255);
+            if (!hsb)
+                colorMode(RGB, 255);
             break;
         case 's':
             sort = !sort;
