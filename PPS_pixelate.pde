@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 Movie mov;
-Capture[] captures = new Capture[4];
+Capture[] captures;
 Capture capture;
 Capture captureNext;
 int cap = 0;
@@ -59,6 +59,7 @@ public void settings()
         
         // add cameras to capture list
         // make sure captures array is the correct length!
+        captures = new Capture[4];
         captures[0] = new Capture(this, "name=HD USB Camera,size=1296x972,fps=30");
         captures[1] = new Capture(this, "name=HD USB Camera #2,size=1296x972,fps=30");
         captures[2] = new Capture(this, "name=HD USB Camera #3,size=1296x972,fps=30");
@@ -73,7 +74,8 @@ public void settings()
     }
     
     // size(1280,720);
-    size(1296,972);
+    // size(1296,972);
+    size(1920, 1200);
 }
 
 void setup()
