@@ -143,10 +143,10 @@ void draw()
     
     for (int j = 0; j < ypixels; j++)
     {
-        y = j * pixelsize;
+        y = (int) (j * pixelsize / scale);
         for (int i = 0; i < xpixels; i++)
         {
-            x = i * pixelsize;
+            x = (int) (i * pixelsize / scale);
             
             if (usb)
                 c = capture.get(x, y);
