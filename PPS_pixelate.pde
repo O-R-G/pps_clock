@@ -16,16 +16,16 @@ import java.util.Collections;
 import java.util.Comparator;
 
 Movie mov;
-Capture[] captures = new Capture[2];
+Capture[] captures = new Capture[4];
 Capture capture;
 Capture captureNext;
 int cap = 0;
 int camSwitchInterval = 5; // units = minutes
 boolean canSwitchCam = false;
 
-boolean usb;                 		// usb cam
-boolean hsb;                		// enforce HSB color model
-boolean sort;  	 		            // sort pixels
+boolean usb;                        // usb cam
+boolean hsb;                        // enforce HSB color model
+boolean sort;                       // sort pixels
 boolean sortrows;                   // sort rows, alternating
 boolean sortrowswonky;
 boolean sortcolsvhs;
@@ -53,24 +53,26 @@ public void settings()
 {
     int w, h;
     
-	try 
-	{
-		usb = true;
-		
-		// add cameras to capture list
-		// make sure captures array is the correct length!
-		captures[0] = new Capture(this, "name=HD USB Camera,size=1296x972,fps=30");
-		captures[1] = new Capture(this, "name=FaceTime HD Camera,size=1280x720,fps=30");
-	} 
-	catch (Exception e) 
-	{
-		usb = false;
-		e.printStackTrace();
-		w = 640;
-		h = 360;
-	}
-	
-	size(1280,720);
+    try 
+    {
+        usb = true;
+        
+        // add cameras to capture list
+        // make sure captures array is the correct length!
+        captures[0] = new Capture(this, "name=HD USB Camera,size=1296x972,fps=30");
+        captures[1] = new Capture(this, "name=HD USB Camera #2,size=1296x972,fps=30");
+        captures[2] = new Capture(this, "name=HD USB Camera #3,size=1296x972,fps=30");
+        captures[3] = new Capture(this, "name=HD USB Camera #4,size=1296x972,fps=30");
+    } 
+    catch (Exception e) 
+    {
+        usb = false;
+        e.printStackTrace();
+        w = 640;
+        h = 360;
+    }
+    
+    size(1280,720);
 }
 
 void setup()
@@ -81,20 +83,20 @@ void setup()
     background(0);
 
     // start the cameras
-	if (usb)
+    if (usb)
     {
-		try 
-		{
-		    println("Using usb camera . . . ");
+        try 
+        {
+            println("Using usb camera . . . ");
             capture = captures[cap];
-        	captures[cap].start();
-		} 
-		catch (Exception e) 
-		{
-			usb = false;
-    		e.printStackTrace();
-			printArray(Capture.list());	
-  		}
+            captures[cap].start();
+        } 
+        catch (Exception e) 
+        {
+            usb = false;
+            e.printStackTrace();
+            printArray(Capture.list()); 
+        }
     } 
     else
     {
@@ -193,16 +195,16 @@ void draw()
     for (int j = 0; j < ypixels; j++) {
         for (int i = 0; i < xpixels; i++) {
             int index = (j * xpixels + i + shiftarrayamt) % numpixels;
-			c = pixels.get(index).getColor();
+            c = pixels.get(index).getColor();
 
-			// rgb 
+            // rgb 
             // fill(red(c), green(c), blue(c), alpha);
 
-			// hsb, max s, b
+            // hsb, max s, b
             // colorMode(HSB, 255);
             // fill(hue(c), 255, 255, alpha);
 
-			// map hsb -> rgb
+            // map hsb -> rgb
             fill(hue(c), saturation(c), brightness(c), alpha);
 
             rect(i*pixelsize*scale, j*pixelsize*scale, pixelsize*scale, pixelsize*scale);
