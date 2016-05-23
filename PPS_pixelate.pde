@@ -229,6 +229,7 @@ void draw()
         captureNext = captures[cap];
         captureNext.start();
         canSwitchCam = true;
+        saveFrame("/Users/icp/Dropbox/clock-images/frame-####.png");
     }
 }
 
