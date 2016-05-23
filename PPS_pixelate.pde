@@ -60,10 +60,14 @@ public void settings()
         // add cameras to capture list
         // make sure captures array is the correct length!
         captures = new Capture[4];
-        captures[0] = new Capture(this, "name=HD USB Camera,size=1296x972,fps=30");
-        captures[1] = new Capture(this, "name=HD USB Camera #2,size=1296x972,fps=30");
-        captures[2] = new Capture(this, "name=HD USB Camera #3,size=1296x972,fps=30");
-        captures[3] = new Capture(this, "name=HD USB Camera #4,size=1296x972,fps=30");
+//         captures[0] = new Capture(this, "name=HD USB Camera,size=1296x972,fps=30");
+//         captures[1] = new Capture(this, "name=HD USB Camera #2,size=1296x972,fps=30");
+//         captures[2] = new Capture(this, "name=HD USB Camera #3,size=1296x972,fps=30");
+//         captures[3] = new Capture(this, "name=HD USB Camera #4,size=1296x972,fps=30");
+        captures[0] = new Capture(this, "name=HD USB Camera,size=324x243,fps=30");
+        captures[1] = new Capture(this, "name=HD USB Camera #2,size=324x243,fps=30");
+        captures[2] = new Capture(this, "name=HD USB Camera #3,size=324x243,fps=30");
+        captures[3] = new Capture(this, "name=HD USB Camera #4,size=324x243,fps=30");
     } 
     catch (Exception e) 
     {
@@ -75,7 +79,7 @@ public void settings()
     
     // size(1280,720);
     // size(1296,972);
-    size(1920, 1200);
+    size(1920, 1080);
 }
 
 void setup()
@@ -91,6 +95,7 @@ void setup()
         try 
         {
             println("Using usb camera . . . ");
+            printArray(Capture.list()); 
             capture = captures[cap];
             captures[cap].start();
         } 
