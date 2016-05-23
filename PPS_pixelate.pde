@@ -41,7 +41,7 @@ int alpha = 50;                     // [0-255]
 int shiftarrayamt;
 int count = 0;
 
-float scale = 1.0;                  // scale video input
+float scale = 6.0 / (float) pixelsize;                  // scale video input
 float sortspeed = 100.0;
 
 String movsrc = "basement.mov";
