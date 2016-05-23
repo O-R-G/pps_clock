@@ -72,7 +72,8 @@ public void settings()
         h = 360;
     }
     
-    size(1280,720);
+    // size(1280,720);
+    size(1296,972);
 }
 
 void setup()
