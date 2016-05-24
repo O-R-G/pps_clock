@@ -14,6 +14,8 @@
 import processing.video.*;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 Movie mov;
 Capture[] captures;
@@ -25,27 +27,30 @@ boolean canSwitchCam = false;
 
 boolean usb;                        // usb cam
 boolean hsb;                        // enforce HSB color model
-boolean sort;                       // sort pixels
-boolean sortrows;                   // sort rows, alternating
-boolean sortrowswonky;
-boolean sortcolsvhs;
-boolean sortcolumns;                // sort columns (messed up)
 boolean shiftarray;                 // linear shift, ring buffer
 boolean knuthshuffle;               // shuffle pixels
 
 int numpixels, ypixels, xpixels;
-int pixelsize = 4;
+
+int outpixelsize = 6;
+int inpixelsize = 4;
+int pixelsize = 6;
 int pixelstep = 1;
+
 int sortprogress;
 int alpha = 50;                     // [0-255]
 int shiftarrayamt;
 int count = 0;
+int sorttype = 0;
+int comptype = 0;
 
-float scale = 6.0 / (float) pixelsize;                  // scale video input
+float scale = 1.0;             // scale video input
 float sortspeed = 100.0;
 
 String movsrc = "basement.mov";
+String basepath = "/Users/lily/Dropbox/shared/clock-images/";
 
+PixelSort pixelsort;
 PixelComparator comp;
 
 // dynamically set the size because I CAN.
@@ -59,17 +64,14 @@ public void settings()
         
         // add cameras to capture list
         // make sure captures array is the correct length!
-        captures = new Capture[4];
+        captures = new Capture[3];
         captures[0] = new Capture(this, "name=HD USB Camera,size=1296x972,fps=30");
-        captures[1] = new Capture(this, "name=HD USB Camera #2,size=1296x972,fps=30");
-        captures[2] = new Capture(this, "name=HD USB Camera #3,size=1296x972,fps=30");
-        captures[3] = new Capture(this, "name=HD USB Camera #4,size=1296x972,fps=30");
-//        captures[1] = new Capture(this, "name=FaceTime HD Camera,size=320x180,fps=30");
-//         captures[1] = new Capture(this, "name=HD USB Camera,size=324x243,fps=30");
-        
-//         captures[1] = new Capture(this, "name=HD USB Camera #2,size=324x243,fps=30");
-//         captures[2] = new Capture(this, "name=HD USB Camera #3,size=324x243,fps=30");
-//         captures[3] = new Capture(this, "name=HD USB Camera #4,size=324x243,fps=30");
+        captures[1] = new Capture(this, "name=FaceTime HD Camera (Built-in),size=1280x720,fps=30");
+        captures[2] = new Capture(this, "name=FaceTime HD Camera (Built-in),size=320x180,fps=30");
+//         captures[1] = new Capture(this, "name=HD USB Camera #2,size=1296x972,fps=30");
+//         captures[2] = new Capture(this, "name=HD USB Camera #3,size=1296x972,fps=30");
+//         captures[3] = new Capture(this, "name=HD USB Camera #4,size=1296x972,fps=30");
+//         captures[1] = new Capture(this, "name=FaceTime HD Camera,size=320x180,fps=30");
     } 
     catch (Exception e) 
     {
@@ -81,13 +83,13 @@ public void settings()
     
     // size(1280,720);
     // size(1296,972);
+    // size(2560, 1440);
     size(1920, 1080);
 }
 
 void setup()
 {
     frameRate(60);
-    // surface.setResizable(true);
     noStroke();
     background(0);
 
@@ -98,7 +100,7 @@ void setup()
         {
             println("Using usb camera . . . ");
             capture = captures[cap];
-            captures[cap].start();
+            capture.start();
         } 
         catch (Exception e) 
         {
@@ -117,75 +119,81 @@ void setup()
     }
 
     setResolution(pixelsize);
-    comp = new BrightnessComparator();
+    pixelsort = new PixelSort(xpixels, ypixels);
+}
+
+ArrayList<Pixel> getPixels(Capture capture)
+{
+    ArrayList<Pixel> pixels = new ArrayList<Pixel>();
+    int x, y;
+    color c;
+    
+    if (capture.available())
+        capture.read();
+    
+    for (int j = 0; j < ypixels; j++)
+    {
+        y = (int) (j * inpixelsize);
+        for (int i = 0; i < xpixels; i++)
+        {
+            x = (int) (i * inpixelsize);
+            c = capture.get(x, y);
+            pixels.add(new Pixel(c));
+        }
+    }
+    
+    return pixels;
+}
+
+ArrayList<Pixel> getPixelsFromMov(Movie mov)
+{
+    ArrayList<Pixel> pixels = new ArrayList<Pixel>();
+    int x, y;
+    color c;
+    
+    if (mov.available())
+        mov.read();
+    
+    for (int j = 0; j < ypixels; j++)
+    {
+        y = (int) (j * pixelsize * scale);
+        for (int i = 0; i < xpixels; i++)
+        {
+            x = (int) (i * pixelsize * scale);
+            c = mov.get(x, y);
+            pixels.add(new Pixel(c));
+        }
+    }
+    
+    return pixels;
 }
 
 void draw()
 {
     ArrayList<Pixel> pixels;
-    int x, y; // count;
-    color c;
     
-    // count = 0;
     count++;
-    if (usb && canSwitchCam && (minute() % camSwitchInterval == 0))
+    
+    // switch cameras
+    if (usb && canSwitchCam && (minute() % camSwitchInterval == 0) && captures.length > 1)
     {  
         capture.stop();
         capture = captureNext;
         canSwitchCam = false;
     }
-    pixels = new ArrayList<Pixel>();
     
-    if (usb && capture.available())
-        capture.read();
-    if (!usb && mov.available())
-        mov.read();
-    
-    for (int j = 0; j < ypixels; j++)
-    {
-        y = (int) (j * pixelsize / scale);
-        for (int i = 0; i < xpixels; i++)
-        {
-            x = (int) (i * pixelsize / scale);
-            
-            if (usb)
-                c = capture.get(x, y);
-            else
-                c = mov.get(x, y);
-
-            pixels.add(new Pixel(c));
-        }
-    }
+    // use movie if camera not available
+    if (usb)
+        pixels = getPixels(capture);
+    else
+        pixels = getPixelsFromMov(mov);
 
     // adjust pixels
-
     if (sortprogress < numpixels - 1) 
         sortprogress += sortspeed;
-
-    if (sort)
-    {
-        Collections.sort(pixels, comp);
-    }
-
-    if (sortcolumns)
-    {
-        pixels = sortCols(pixels);
-    }
-        
-    if (sortrows)
-    {
-        pixels = sortRows(pixels);
-    }
     
-    if (sortrowswonky)
-    {
-        pixels = sortRowsWonky(pixels);
-    }
-    
-    if (sortcolsvhs)
-    {
-        pixels = sortColsVHS(pixels);
-    }
+    // sort!
+    pixels = pixelsort.sort(pixels, comptype, sorttype);
 
     if (shiftarray)
     {
@@ -193,18 +201,15 @@ void draw()
     }
 
     if (knuthshuffle)
-    {   
-        
+    {
         knuthShuffle(pixels, 0, sortprogress);
-        // knuthShuffle(pixels, 0, numpixels);
-        // knuthShuffle(pixelmap, int(random(pixels-1)), int(random(pixels)));
     } 
 
     // display
     for (int j = 0; j < ypixels; j++) {
         for (int i = 0; i < xpixels; i++) {
             int index = (j * xpixels + i + shiftarrayamt) % numpixels;
-            c = pixels.get(index).getColor();
+            color c = pixels.get(index).getColor();
 
             // rgb 
             // fill(red(c), green(c), blue(c), alpha);
@@ -219,27 +224,31 @@ void draw()
             rect(i*pixelsize*scale, j*pixelsize*scale, pixelsize*scale, pixelsize*scale);
         }
     }
-
-    // saveFrame("out/frame-####.png");
-
-    // printArray(pixelmap);
-    // println(colors);
-    // printArray(colors);
-    // println("colors[0] " + hex(colors[0]) );
-    // println("red(colors[0])   " + red(colors[0]) );
-    // println("colors[0]   " + binary(colors[0]) );
-    // println("colors[0]   " + int(binary(colors[0] >> 16 & 0xFF)));
-    // println("pixelmap[0] " + binary(pixelmap[0]));
     
     if (usb && (!canSwitchCam) && (minute() % camSwitchInterval == camSwitchInterval - 1) && (second() > 40))
-    {  
+    {
         cap++;
         cap %= captures.length;
         captureNext = captures[cap];
         captureNext.start();
         canSwitchCam = true;
-        saveFrame("/Users/icp/Dropbox/clock-images/frame-####.png");
+        
+        saveImage();
     }
+}
+
+void saveImage()
+{
+    SimpleDateFormat df;
+    Date dateobj;
+    String path;
+    
+    df = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
+    dateobj = new Date();
+    
+    path = basepath.concat(df.format(dateobj)).concat(".png");
+    saveFrame(path);
+    println("Saved to: ".concat(path));
 }
 
 void knuthShuffle(ArrayList<Pixel> pixels, int min, int max)
@@ -282,97 +291,6 @@ public int shiftArray(int[] array, int amt, int offset)
     return offset;
 }
 
-void sortArray(int[] array, int min, int max)
-{
-    // todo
-}
-
-ArrayList<Pixel> sortRows(ArrayList<Pixel> plist)
-{
-    ArrayList<Pixel> sorted, row;
-    sorted = new ArrayList<Pixel>();
-    
-     for (int j = 0; j < ypixels; j++)
-     {
-        row = new ArrayList<Pixel>();
-        
-        for (int i = 0; i < xpixels; i++)
-            row.add(plist.get(j * xpixels + i));
-            
-        Collections.sort(row, comp);
-        sorted.addAll(row);
-     }
-     
-     return sorted;
-}
-
-ArrayList<Pixel> sortCols(ArrayList<Pixel> plist)
-{
-    ArrayList<ArrayList<Pixel>> columns;
-    ArrayList<Pixel> sorted, col;
-    
-    sorted = new ArrayList<Pixel>();
-    columns = new ArrayList<ArrayList<Pixel>>();
-    
-     for (int j = 0; j < xpixels; j++)
-     {
-        col = new ArrayList<Pixel>();
-        
-        for (int i = 0; i < ypixels; i++)
-            col.add(plist.get(i * xpixels + j));
-        
-        Collections.sort(col, comp);
-        
-        columns.add(col);
-     }
-     
-     for (int i = 0; i < columns.get(0).size(); i++)
-     {
-        for (int j = 0; j < columns.size(); j++)
-        {
-            sorted.add(columns.get(j).get(i));
-        }
-     }
-     
-     return sorted;
-}
-
-ArrayList<Pixel> sortRowsWonky(ArrayList<Pixel> pixels)
-{
-    ArrayList<Pixel> sorted, row;
-    sorted = new ArrayList<Pixel>();
-    
-    for (int j = 0; j < ypixels; j++)
-    {
-        row = new ArrayList<Pixel>();
-        for (int i = 0; i < xpixels; i++)
-            row.add(pixels.get(j * xpixels + i));
-        Collections.sort(row, comp);
-        if (j % 2 == 0)
-            Collections.reverse(row);
-        sorted.addAll(row);
-    }
-    return sorted;
-}
-
-ArrayList<Pixel> sortColsVHS(ArrayList<Pixel> pixels)
-{
-    ArrayList<Pixel> sorted, col;
-    sorted = new ArrayList<Pixel>();
-    
-    for (int j = 0; j < xpixels; j++)
-    {
-        col = new ArrayList<Pixel>();
-        for (int i = 0; i < ypixels; i++)
-            col.add(pixels.get(j * ypixels + i));
-        
-        Collections.sort(col, comp);
-        if (j % 2 == 0)
-            Collections.reverse(col);
-        sorted.addAll(col);
-    }
-    return sorted;
-}
 void setResolution(int thispixelsize)
 {
     pixelsize = thispixelsize;
@@ -382,6 +300,8 @@ void setResolution(int thispixelsize)
     xpixels = width / pixelsize;
     ypixels = height / pixelsize;
     numpixels = xpixels * ypixels;
+    println(xpixels);
+    println(ypixels);
 }
 
 void keyPressed()
@@ -395,17 +315,14 @@ void keyPressed()
             if (!hsb)
                 colorMode(RGB, 255);
             break;
-        case 's':
-            sort = !sort;
-            sortprogress = 0;
+        case 'd':
+            saveImage();
             break;
-        case 'r':
-            sortrows = !sortrows;
-            sortprogress = 0;
+        case 's':
+            sorttype++;
             break;
         case 'c':
-            sortcolumns = !sortcolumns;
-            sortprogress = 0;
+            comptype++;
             break;
         case 'k':  
             knuthshuffle = !knuthshuffle;
@@ -413,14 +330,6 @@ void keyPressed()
             break;
         case 'h':
             shiftarray = !shiftarray;
-            sortprogress = 0;
-            break;
-        case 'w':
-            sortrowswonky = !sortrowswonky;
-            sortprogress = 0;
-            break;
-        case 'v':
-            sortcolsvhs = !sortcolsvhs;
             sortprogress = 0;
             break;
         case '+':       // pixelsize++
@@ -443,12 +352,3 @@ void keyPressed()
             break;
     }
 }
-
-public int gcd(int a, int b)
-{
-    if (b == 0)
-        return a;
-    else
-        return gcd(b, a % b);
-}
-
