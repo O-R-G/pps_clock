@@ -18,7 +18,11 @@ yest_pre = yest_dir.replace("-", "")
 
 #
 config = ConfigParser.ConfigParser()
-config.read("./config.cfg")
+cfg = os.path.dirname(__file__)
+cfg = os.path.abspath(cfg)
+cfg = os.path.join(cfg, "config.cfg")
+config.read(cfg)
+
 dropbox_dir = config.get('dirs', 'dropbox')
 offload_dir = config.get('dirs', 'offload')
 offload_dir = os.path.join(offload_dir, yest_dir)
