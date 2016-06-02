@@ -48,48 +48,13 @@ float scale = 1.0;             // scale video input
 float sortspeed = 100.0;
 
 String movsrc = "basement.mov";
-String basepath = "/Users/lily/Dropbox/shared/clock-images/";
 
 PixelSort pixelsort;
 PixelComparator comp;
 
-// dynamically set the size because I CAN.
-public void settings()
-{
-    int w, h;
-    
-    try 
-    {
-        usb = true;
-        
-        // add cameras to capture list
-        // make sure captures array is the correct length!
-        captures = new Capture[3];
-        captures[0] = new Capture(this, "name=HD USB Camera,size=1296x972,fps=30");
-        captures[1] = new Capture(this, "name=FaceTime HD Camera (Built-in),size=1280x720,fps=30");
-        captures[2] = new Capture(this, "name=FaceTime HD Camera (Built-in),size=320x180,fps=30");
-//         captures[1] = new Capture(this, "name=HD USB Camera #2,size=1296x972,fps=30");
-//         captures[2] = new Capture(this, "name=HD USB Camera #3,size=1296x972,fps=30");
-//         captures[3] = new Capture(this, "name=HD USB Camera #4,size=1296x972,fps=30");
-//         captures[1] = new Capture(this, "name=FaceTime HD Camera,size=320x180,fps=30");
-    } 
-    catch (Exception e) 
-    {
-        usb = false;
-        e.printStackTrace();
-        w = 640;
-        h = 360;
-    }
-    
-    // size(1280,720);
-    // size(1296,972);
-    // size(2560, 1440);
-    size(1920, 1080);
-}
-
 void setup()
 {
-    frameRate(60);
+    frameRate(30);
     noStroke();
     background(0);
 
