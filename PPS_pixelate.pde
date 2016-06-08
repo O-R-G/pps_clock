@@ -109,7 +109,10 @@ ArrayList<Pixel> getPixels(Capture capture)
         return pixels;
     }
     else
+    {
+        println("crap!");
         return null;
+    }
 }
 
 ArrayList<Pixel> getPixelsFromMov(Movie mov)
@@ -149,8 +152,7 @@ void draw()
     {  
         if ((captures.length > 1 
             && m % camSwitchInterval == 0 
-            && canSwitchCam)
-            || (captures.length > 1 && pixels == null))
+            && canSwitchCam))
         {
             capture.stop();
             capture = captureNext;
@@ -162,8 +164,7 @@ void draw()
         // start the next camera 20 seconds early
         if ((!canSwitchCam 
             && (m % camSwitchInterval == camSwitchInterval - 1) 
-            && (s > 40))
-            || (captures.length > 1 && pixels == null))
+            && (s > 40)))
         {
             cap++;
             cap %= captures.length;
