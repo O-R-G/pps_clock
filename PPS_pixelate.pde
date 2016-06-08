@@ -228,10 +228,11 @@ void draw()
         }
         startflag = true;
     }
-    else if (badcount > 30)
+    else if (badcount > 10 && startflag)
     {
         turnOnNextCam();
         switchCams();
+        startflag = false;
     }
 }
 
