@@ -13,7 +13,7 @@ Capture capture;
 Capture captureNext;
 
 int cap = 0;
-int camSwitchInterval = 2; // units = minutes
+int camSwitchInterval = 15; // units = minutes
 boolean canSwitchCam = false;
 
 int saveImageLastMin = -1;
@@ -44,8 +44,8 @@ int comptype = 0;
 int numSorts = 7;
 int numComps = 3;
 
-boolean startflag = false;
-int badcount = 0;
+boolean camStarted = false;
+int nullFrames = 0;
 
 String movsrc = "basement.mov";
 
@@ -97,7 +97,7 @@ ArrayList<Pixel> getPixels(Capture capture)
     
     if (capture.available())
     {
-        badcount = 0;
+        nullFrames = 0;
         capture.read();
     
         for (int j = 0; j < ypixels; j++)
@@ -114,8 +114,7 @@ ArrayList<Pixel> getPixels(Capture capture)
     }
     else
     {
-        println("crap!");
-        badcount++;
+        nullFrames++;
         return null;
     }
 }
@@ -155,17 +154,13 @@ void draw()
     // switch cameras
     if (usb)
     {  
-        if ((captures.length > 1 
-            && m % camSwitchInterval == 0 
-            && canSwitchCam))
+        if (captures.length > 1 && m % camSwitchInterval == 0 && canSwitchCam)
         {
             switchCams();
         }
         
         // start the next camera 20 seconds early
-        if ((!canSwitchCam 
-            && (m % camSwitchInterval == camSwitchInterval - 1) 
-            && (s > 40)))
+        if (!canSwitchCam && (m % camSwitchInterval == camSwitchInterval - 1) && (s > 40))
         {
             turnOnNextCam();
         }
@@ -226,13 +221,13 @@ void draw()
             saveImage();
             saveImageLastMin = m;
         }
-        startflag = true;
+        camStarted = true;
     }
-    else if (badcount > 10 && startflag)
+    else if (nullFrames > 10 && camStarted)
     {
         turnOnNextCam();
         switchCams();
-        startflag = false;
+        camStarted = false;
     }
 }
 
@@ -245,10 +240,12 @@ void turnOnNextCam()
         cap++;
         cap %= captures.length;
         captureNext = captures[cap];
+        // make sure next camera is available
         try {
             captureNext.start();
             canSwitchCam = true;
         }
+        // move on to the next-next
         catch (Exception e) {
             flag = true;
         }
