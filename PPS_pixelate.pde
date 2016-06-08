@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.text.SimpleDateFormat;
+import java.io.File;
+import java.io.FilenameFilter;
 
 Movie mov;
 Capture[] captures;
@@ -49,6 +51,10 @@ String movsrc = "basement.mov";
 PixelSort pixelsort;
 PixelComparator comp;
 
+PImage[] loadedimages;
+
+int imagescount;
+int imagescounter;
 
 void setup()
 {
@@ -81,6 +87,9 @@ void setup()
         mov.read();
         surface.setSize(mov.width, mov.height);
     }
+
+	imagescount = int(60/saveImageInterval);
+	loadedimages = new PImage[imagescount];
 
     setResolution(pixelsize);
     pixelsort = new PixelSort(xpixels, ypixels);
@@ -191,7 +200,6 @@ void draw()
         comptype = int(random(0, numComps));
         compSwitchLastMin = m;
     }
-
     
     if (pixels != null)
     {
@@ -208,8 +216,8 @@ void draw()
                 // fill(red(c), green(c), blue(c), alpha);
 
                 // hsb, max s, b
-//                 colorMode(HSB, 255);
-//                 fill(hue(c), 255, 255, alpha);
+				// colorMode(HSB, 255);
+				// fill(hue(c), 255, 255, alpha);
 
                 // map hsb -> rgb
                 fill(hue(c), saturation(c), brightness(c), alpha);
@@ -222,8 +230,23 @@ void draw()
         if ((m % saveImageInterval == 0) && (m != saveImageLastMin) && s == 30)
         {
             saveImage();
-            saveImageLastMin = m;
+            saveImageLastMin = m;		
         }
+
+		// ** dev **
+		// can even read these into pixels array perhaps
+		// and should move up in the draw loop
+		// so that it is not drawing on top of the other
+		// how to handle timing ?
+		// or alternately, save states and replay from that
+
+		if (imagesloaded(imagescount)) 
+		{
+			// draw images in sequence
+			image(loadedimages[imagescounter % imagescount],0,0);	
+			println("loadedimages " + imagescounter % imagescount);
+			imagescounter++;
+		}
     }
 }
 
@@ -240,6 +263,38 @@ void saveImage()
     saveFrame(path);
     println("Saved to: ".concat(path));
 }
+
+void loadImages(int num, PImage[] stagedimages)
+{
+	// loadedimages is an array passed as a pointer no need to return value
+
+	java.io.File folder = new java.io.File(dataPath(basepath));
+ 	String[] filenames = folder.list(pngFilter);
+	filenames = reverse(filenames);		// last modified
+	for (int i = 0; i < num; i++) 
+	{
+		stagedimages[i] = requestImage(basepath.concat(filenames[i]));
+	}
+	println("Loading images . . .");
+}
+
+boolean imagesloaded(int num)
+{
+	for (int i = 0; i < num; i++) 
+	{
+	    if ((loadedimages[i] == null) || (loadedimages[i].width == 0) || (loadedimages[i].width == -1))
+			return false;
+	}	
+	return true;
+}
+
+final FilenameFilter pngFilter = new FilenameFilter() 
+{
+  	boolean accept(File dir, String name) 
+	{
+    	return name.toLowerCase().endsWith(".png");
+  	}
+};
 
 void setResolution(int thispixelsize)
 {
@@ -289,6 +344,13 @@ void keyPressed()
         case '-':
             if (alpha - 1 > 0) alpha--;
             println("alpha : " + alpha);
+            break;
+        case 'i':
+			loadedimages = new PImage[imagescount];
+	    	loadImages(imagescount, loadedimages);
+            break;
+        case 'o':
+			loadedimages = new PImage[imagescount];
             break;
         default:
             break;
