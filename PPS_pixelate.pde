@@ -164,17 +164,22 @@ void draw()
             cap++;
             cap %= captures.length;
             captureNext = captures[cap];
-            while (!canSwitchCam)
+            boolean flag = true;
+            while (flag)
             {
+                flag = false;
                 try {
                     captureNext.start();
-                    canSwitchCam = true;
+                    println("hey");
                 }
                 catch (Exception e) {
+                    flag = true;
+                    println("oops");
                 }
                 cap++;
                 cap %= captures.length;
                 captureNext = captures[cap];
+                canSwitchCam = true;
             }
         }
         
