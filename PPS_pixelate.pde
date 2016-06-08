@@ -147,19 +147,23 @@ void draw()
     // switch cameras
     if (usb)
     {  
-        if (captures.length > 1 
+        if ((captures.length > 1 
             && m % camSwitchInterval == 0 
             && canSwitchCam)
+            || (captures.length > 1 && pixels == null))
         {
             capture.stop();
             capture = captureNext;
             canSwitchCam = false;
         }
         
+        pixels = getPixels(capture);
+        
         // start the next camera 20 seconds early
-        if (!canSwitchCam 
+        if ((!canSwitchCam 
             && (m % camSwitchInterval == camSwitchInterval - 1) 
             && (s > 40))
+            || (captures.length > 1 && pixels == null))
         {
             cap++;
             cap %= captures.length;
@@ -170,20 +174,16 @@ void draw()
                 flag = false;
                 try {
                     captureNext.start();
-                    println("hey");
                     canSwitchCam = true;
                 }
                 catch (Exception e) {
                     flag = true;
-                    println("oops");
                     cap++;
                     cap %= captures.length;
                     captureNext = captures[cap];
                 }
             }
         }
-        
-        pixels = getPixels(capture);
     }
     else
     {
