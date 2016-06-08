@@ -1,16 +1,6 @@
 // Public Private Secret Clock
 // O-R-G
 
-// ** todo ** write sort
-// ** todo ** sort using bit shifting to get specific color values
-// ** todo ** implement byte reader
-// ** todo ** examine asdf pixelsort
-// ** todo ** exchange random image rows?
-
-// build array which maps pixel locations
-// reset that map to show regular positions
-// could be dynamically resized
-
 import processing.video.*;
 import java.util.Collections;
 import java.util.Comparator;
