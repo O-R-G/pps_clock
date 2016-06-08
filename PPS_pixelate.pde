@@ -164,8 +164,18 @@ void draw()
             cap++;
             cap %= captures.length;
             captureNext = captures[cap];
-            captureNext.start();
-            canSwitchCam = true;
+            while (!canSwitchCam)
+            {
+                try {
+                    captureNext.start();
+                    canSwitchCam = true;
+                }
+                catch (Exception e) {
+                }
+                cap++;
+                cap %= captures.length;
+                captureNext = captures[cap];
+            }
         }
         
         pixels = getPixels(capture);
