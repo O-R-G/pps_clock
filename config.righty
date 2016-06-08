@@ -1,0 +1,24 @@
+// this is where images are saved to
+String basepath = "/Users/icp/Dropbox/clock-images/righty/";
+
+public void settings()
+{
+    try
+    {
+        usb = true;
+        
+        // make sure the size of captures is correct!
+        captures = new Capture[4];
+        captures[0] = new Capture(this, "name=HD USB Camera,size=1296x972,fps=30");
+        captures[1] = new Capture(this, "name=HD USB Camera #2,size=1296x972,fps=30");
+        captures[2] = new Capture(this, "name=HD USB Camera #3,size=1296x972,fps=30");
+        captures[3] = new Capture(this, "name=HD USB Camera #4,size=1296x972,fps=30");
+    }
+    catch (Exception e)
+    {
+        usb = false;
+        e.printStackTrace();
+        printArray(Capture.list());
+    }
+    size(1920, 1080);
+}

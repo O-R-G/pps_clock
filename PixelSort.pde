@@ -39,14 +39,15 @@ public class PixelSort
                 sorted = this.sortCols(sorted, comp);
                 break;
             case 4:
-                sorted = this.sortRowsWonky(sorted, comp);
-                break;
-            case 5:
-                sorted = this.sortColsVHS(sorted, comp);
-                break;
-            case 6:
                 sorted = this.sortRows(sorted, comp);
                 sorted = this.sortCols(sorted, comp);
+                break;
+            case 5:
+                sorted = this.sortCols(sorted, comp);
+                sorted = this.sortRows(sorted, comp);
+                break;
+            case 6:
+                sorted = this.knuthShuffle(sorted);
                 break;
         }
 
@@ -101,6 +102,19 @@ public class PixelSort
          }
      
          return sorted;
+    }
+    
+    protected ArrayList<Pixel> knuthShuffle(ArrayList<Pixel> pixels)
+    {
+        int min, max;
+        min = 0;
+        max = pixels.size();
+        for (int i = max; i > min; i--)
+        {
+            int j = int(random(min, max));
+            Collections.swap(pixels, j, i-1);
+        }
+        return pixels;
     }
     
     protected ArrayList<Pixel> sortRowsWonky(ArrayList<Pixel> pixels, PixelComparator comp)

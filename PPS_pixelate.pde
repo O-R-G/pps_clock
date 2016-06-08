@@ -21,14 +21,18 @@ Movie mov;
 Capture[] captures;
 Capture capture;
 Capture captureNext;
+
 int cap = 0;
 int camSwitchInterval = 5; // units = minutes
+int saveImageInterval = 1;
+int sortSwitchInterval = 2;
+int sortSwitchLastMin = -1;
+int compSwitchLastMin = -1;
+int compSwitchInterval = 2;
 boolean canSwitchCam = false;
 
 boolean usb;                        // usb cam
 boolean hsb;                        // enforce HSB color model
-boolean shiftarray;                 // linear shift, ring buffer
-boolean knuthshuffle;               // shuffle pixels
 
 int numpixels, ypixels, xpixels;
 
@@ -37,20 +41,21 @@ int inpixelsize = 4;
 int pixelsize = 6;
 int pixelstep = 1;
 
-int sortprogress;
-int alpha = 50;                     // [0-255]
-int shiftarrayamt;
+int alpha = 100;                     // [0-255]
 int count = 0;
-int sorttype = 0;
+
+int sorttype = 1;
 int comptype = 0;
 
-float scale = 1.0;             // scale video input
-float sortspeed = 100.0;
+int numSorts = 7;
+int numComps = 3;
 
 String movsrc = "basement.mov";
 
 PixelSort pixelsort;
 PixelComparator comp;
+
+int prevMin = -1;
 
 void setup()
 {
@@ -94,20 +99,23 @@ ArrayList<Pixel> getPixels(Capture capture)
     color c;
     
     if (capture.available())
+    {
         capture.read();
     
-    for (int j = 0; j < ypixels; j++)
-    {
-        y = (int) (j * inpixelsize);
-        for (int i = 0; i < xpixels; i++)
+        for (int j = 0; j < ypixels; j++)
         {
-            x = (int) (i * inpixelsize);
-            c = capture.get(x, y);
-            pixels.add(new Pixel(c));
+            y = (int) (j * inpixelsize);
+            for (int i = 0; i < xpixels; i++)
+            {
+                x = (int) (i * inpixelsize);
+                c = capture.get(x, y);
+                pixels.add(new Pixel(c));
+            }
         }
+        return pixels;
     }
-    
-    return pixels;
+    else
+        return null;
 }
 
 ArrayList<Pixel> getPixelsFromMov(Movie mov)
@@ -121,10 +129,10 @@ ArrayList<Pixel> getPixelsFromMov(Movie mov)
     
     for (int j = 0; j < ypixels; j++)
     {
-        y = (int) (j * pixelsize * scale);
+        y = (int) (j * pixelsize);
         for (int i = 0; i < xpixels; i++)
         {
-            x = (int) (i * pixelsize * scale);
+            x = (int) (i * pixelsize);
             c = mov.get(x, y);
             pixels.add(new Pixel(c));
         }
@@ -136,69 +144,88 @@ ArrayList<Pixel> getPixelsFromMov(Movie mov)
 void draw()
 {
     ArrayList<Pixel> pixels;
+    int m, s;
     
+    m = minute();
+    s = second();
     count++;
     
     // switch cameras
-    if (usb && canSwitchCam && (minute() % camSwitchInterval == 0) && captures.length > 1)
-    {  
-        capture.stop();
-        capture = captureNext;
-        canSwitchCam = false;
-    }
-    
-    // use movie if camera not available
     if (usb)
-        pixels = getPixels(capture);
-    else
-        pixels = getPixelsFromMov(mov);
-
-    // adjust pixels
-    if (sortprogress < numpixels - 1) 
-        sortprogress += sortspeed;
-    
-    // sort!
-    pixels = pixelsort.sort(pixels, comptype, sorttype);
-
-    if (shiftarray)
-    {
-        shiftarrayamt += 1;
-    }
-
-    if (knuthshuffle)
-    {
-        knuthShuffle(pixels, 0, sortprogress);
-    } 
-
-    // display
-    for (int j = 0; j < ypixels; j++) {
-        for (int i = 0; i < xpixels; i++) {
-            int index = (j * xpixels + i + shiftarrayamt) % numpixels;
-            color c = pixels.get(index).getColor();
-
-            // rgb 
-            // fill(red(c), green(c), blue(c), alpha);
-
-            // hsb, max s, b
-            // colorMode(HSB, 255);
-            // fill(hue(c), 255, 255, alpha);
-
-            // map hsb -> rgb
-            fill(hue(c), saturation(c), brightness(c), alpha);
-
-            rect(i*pixelsize*scale, j*pixelsize*scale, pixelsize*scale, pixelsize*scale);
+    {  
+        if (canSwitchCam && (m % camSwitchInterval == 0) && captures.length > 1)
+        {
+            capture.stop();
+            capture = captureNext;
+            canSwitchCam = false;
         }
+        
+        // switch sort every compSwitchInterval minutes
+        // choose random sort
+        if (m % sortSwitchInterval == 0 && sortSwitchLastMin != m)
+        {
+            sorttype = int(random(0, numSorts));
+            sortSwitchLastMin = m;
+        }
+        
+         // switch comps every compSwitchInterval minutes        
+        if (m % compSwitchInterval == 0 && compSwitchLastMin != m)
+        {
+            // choose random pixelcomp
+            comptype = int(random(0, numComps));
+            compSwitchLastMin = m;
+        }
+
+        // start the next camera 20 seconds early
+        if (!canSwitchCam 
+            && (m % camSwitchInterval == camSwitchInterval - 1) 
+            && (s > 40))
+        {
+            cap++;
+            cap %= captures.length;
+            captureNext = captures[cap];
+            captureNext.start();
+            canSwitchCam = true;
+        }
+        
+        pixels = getPixels(capture);
+    }
+    else
+    {
+        pixels = getPixelsFromMov(mov);
     }
     
-    if (usb && (!canSwitchCam) && (minute() % camSwitchInterval == camSwitchInterval - 1) && (second() > 40))
+    if (pixels != null)
     {
-        cap++;
-        cap %= captures.length;
-        captureNext = captures[cap];
-        captureNext.start();
-        canSwitchCam = true;
-        
-        saveImage();
+        // sort!
+        pixels = pixelsort.sort(pixels, comptype, sorttype);
+
+        // display
+        for (int j = 0; j < ypixels; j++) {
+            for (int i = 0; i < xpixels; i++) {
+                int index = (j * xpixels + i) % numpixels;
+                color c = pixels.get(index).getColor();
+
+                // rgb 
+                // fill(red(c), green(c), blue(c), alpha);
+
+                // hsb, max s, b
+//                 colorMode(HSB, 255);
+//                 fill(hue(c), 255, 255, alpha);
+
+                // map hsb -> rgb
+                fill(hue(c), saturation(c), brightness(c), alpha);
+
+                rect(i*pixelsize, j*pixelsize, pixelsize, pixelsize);
+            }
+        }
+    
+        // save a frame every saveImageInterval minutes
+        if ((m % saveImageInterval == 0) && (m != prevMin))
+        {
+            saveImage();
+            prevMin = m;
+        }
     }
 }
 
@@ -214,46 +241,6 @@ void saveImage()
     path = basepath.concat(df.format(dateobj)).concat(".png");
     saveFrame(path);
     println("Saved to: ".concat(path));
-}
-
-void knuthShuffle(ArrayList<Pixel> pixels, int min, int max)
-{
-    for (int i = max; i > min; i--)
-    {
-        int j = int(random(min, max));
-        Collections.swap(pixels, j, i-1);
-    }
-}
-
-public int shiftArray(int[] array, int amt, int offset)
-{
-    // either:  
-    // 1. assign global shift amt, which is incremented and % when read
-    // 2. arrayCopy to modify pixelmap
-
-    // splice last amt items into beginning of the array
-    // shorten the array by amt
-    // acting directly on array, so no need to return any value
-
-    offset += amt;
-
-/*
-    for (int i = 0; i < pixels/8; i++) {
-        int tmp = array[i]; // get discrete value
-        println(tmp);
-        array = splice(array, tmp, 0);
-        println(array);
-        // ** fix ** can also splice in arrays in total
-        // see https://processing.org/reference/splice_.html
-        // array = splice(array, array[10], 0);
-        array = shorten(array);
-        println(array.length);
-        exit();
-    }
-*/
-
-    shiftarray = true;
-    return offset;
 }
 
 void setResolution(int thispixelsize)
@@ -288,14 +275,6 @@ void keyPressed()
             break;
         case 'c':
             comptype++;
-            break;
-        case 'k':  
-            knuthshuffle = !knuthshuffle;
-            sortprogress = 0;
-            break;
-        case 'h':
-            shiftarray = !shiftarray;
-            sortprogress = 0;
             break;
         case '+':       // pixelsize++
             setResolution(pixelsize+1);
