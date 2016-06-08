@@ -23,13 +23,17 @@ Capture capture;
 Capture captureNext;
 
 int cap = 0;
-int camSwitchInterval = 5; // units = minutes
-int saveImageInterval = 1;
-int sortSwitchInterval = 2;
-int sortSwitchLastMin = -1;
-int compSwitchLastMin = -1;
-int compSwitchInterval = 2;
+int camSwitchInterval = 15; // units = minutes
 boolean canSwitchCam = false;
+
+int saveImageLastMin = -1;
+int saveImageInterval = 1;
+
+int sortSwitchInterval = 10;
+int sortSwitchLastMin = -1;
+
+int compSwitchInterval = 5;
+int compSwitchLastMin = -1;
 
 boolean usb;                        // usb cam
 boolean hsb;                        // enforce HSB color model
@@ -55,7 +59,6 @@ String movsrc = "basement.mov";
 PixelSort pixelsort;
 PixelComparator comp;
 
-int prevMin = -1;
 
 void setup()
 {
@@ -153,29 +156,15 @@ void draw()
     // switch cameras
     if (usb)
     {  
-        if (canSwitchCam && (m % camSwitchInterval == 0) && captures.length > 1)
+        if (captures.length > 1 
+            && m % camSwitchInterval == 0 
+            && canSwitchCam)
         {
             capture.stop();
             capture = captureNext;
             canSwitchCam = false;
         }
         
-        // switch sort every compSwitchInterval minutes
-        // choose random sort
-        if (m % sortSwitchInterval == 0 && sortSwitchLastMin != m)
-        {
-            sorttype = int(random(0, numSorts));
-            sortSwitchLastMin = m;
-        }
-        
-         // switch comps every compSwitchInterval minutes        
-        if (m % compSwitchInterval == 0 && compSwitchLastMin != m)
-        {
-            // choose random pixelcomp
-            comptype = int(random(0, numComps));
-            compSwitchLastMin = m;
-        }
-
         // start the next camera 20 seconds early
         if (!canSwitchCam 
             && (m % camSwitchInterval == camSwitchInterval - 1) 
@@ -194,6 +183,24 @@ void draw()
     {
         pixels = getPixelsFromMov(mov);
     }
+    
+    // switch sort every compSwitchInterval minutes
+    // choose random sort
+    if (m % sortSwitchInterval == 0 && sortSwitchLastMin != m)
+    {
+        // choose random sort
+        sorttype = int(random(0, numSorts));
+        sortSwitchLastMin = m;
+    }
+
+    // switch comps every compSwitchInterval minutes        
+    if (m % compSwitchInterval == 0 && compSwitchLastMin != m)
+    {
+        // choose random pixelcomp
+        comptype = int(random(0, numComps));
+        compSwitchLastMin = m;
+    }
+
     
     if (pixels != null)
     {
@@ -221,10 +228,10 @@ void draw()
         }
     
         // save a frame every saveImageInterval minutes
-        if ((m % saveImageInterval == 0) && (m != prevMin))
+        if ((m % saveImageInterval == 0) && (m != saveImageLastMin) && s == 30)
         {
             saveImage();
-            prevMin = m;
+            saveImageLastMin = m;
         }
     }
 }
