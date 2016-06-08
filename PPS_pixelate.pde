@@ -13,7 +13,7 @@ Capture capture;
 Capture captureNext;
 
 int cap = 0;
-int camSwitchInterval = 15; // units = minutes
+int camSwitchInterval = 2; // units = minutes
 boolean canSwitchCam = false;
 
 int saveImageLastMin = -1;
@@ -43,6 +43,8 @@ int comptype = 0;
 
 int numSorts = 7;
 int numComps = 3;
+
+boolean startflag = false;
 
 String movsrc = "basement.mov";
 
@@ -140,7 +142,7 @@ ArrayList<Pixel> getPixelsFromMov(Movie mov)
 
 void draw()
 {
-    ArrayList<Pixel> pixels;
+    ArrayList<Pixel> pixels = new ArrayList<Pixel>();
     int m, s;
     
     m = minute();
@@ -154,37 +156,18 @@ void draw()
             && m % camSwitchInterval == 0 
             && canSwitchCam))
         {
-            capture.stop();
-            capture = captureNext;
-            canSwitchCam = false;
+            switchCams();
         }
-        
-        pixels = getPixels(capture);
         
         // start the next camera 20 seconds early
         if ((!canSwitchCam 
             && (m % camSwitchInterval == camSwitchInterval - 1) 
             && (s > 40)))
         {
-            cap++;
-            cap %= captures.length;
-            captureNext = captures[cap];
-            boolean flag = true;
-            while (flag)
-            {
-                flag = false;
-                try {
-                    captureNext.start();
-                    canSwitchCam = true;
-                }
-                catch (Exception e) {
-                    flag = true;
-                    cap++;
-                    cap %= captures.length;
-                    captureNext = captures[cap];
-                }
-            }
+            turnOnNextCam();
         }
+        
+        pixels = getPixels(capture);
     }
     else
     {
@@ -240,7 +223,39 @@ void draw()
             saveImage();
             saveImageLastMin = m;
         }
+        startflag = true;
     }
+    else if (startflag)
+    {
+        turnOnNextCam();
+        switchCams();
+    }
+}
+
+void turnOnNextCam()
+{
+    boolean flag = true;
+    while (flag)
+    {
+        flag = false;
+        cap++;
+        cap %= captures.length;
+        captureNext = captures[cap];
+        try {
+            captureNext.start();
+            canSwitchCam = true;
+        }
+        catch (Exception e) {
+            flag = true;
+        }
+    }
+}
+
+void switchCams()
+{
+    capture.stop();
+    capture = captureNext;
+    canSwitchCam = false;
 }
 
 void saveImage()
