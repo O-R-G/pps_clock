@@ -62,6 +62,7 @@ void setup()
     frameRate(30);
     noStroke();
     background(0);
+	noCursor();
 
     // start the cameras
     if (usb)
