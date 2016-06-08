@@ -46,6 +46,9 @@ int comptype = 0;
 int numSorts = 7;
 int numComps = 3;
 
+boolean camStarted = false;
+int nullFrames = 0;
+
 String movsrc = "basement.mov";
 
 PixelSort pixelsort;
@@ -103,6 +106,7 @@ ArrayList<Pixel> getPixels(Capture capture)
     
     if (capture.available())
     {
+        nullFrames = 0;
         capture.read();
     
         for (int j = 0; j < ypixels; j++)
@@ -118,7 +122,10 @@ ArrayList<Pixel> getPixels(Capture capture)
         return pixels;
     }
     else
+    {
+        nullFrames++;
         return null;
+    }
 }
 
 ArrayList<Pixel> getPixelsFromMov(Movie mov)
@@ -146,7 +153,7 @@ ArrayList<Pixel> getPixelsFromMov(Movie mov)
 
 void draw()
 {
-    ArrayList<Pixel> pixels;
+    ArrayList<Pixel> pixels = new ArrayList<Pixel>();
     int m, s;
     
     m = minute();
@@ -156,25 +163,15 @@ void draw()
     // switch cameras
     if (usb)
     {  
-        if (captures.length > 1 
-            && m % camSwitchInterval == 0 
-            && canSwitchCam)
+        if (captures.length > 1 && m % camSwitchInterval == 0 && canSwitchCam)
         {
-            capture.stop();
-            capture = captureNext;
-            canSwitchCam = false;
+            switchCams();
         }
         
         // start the next camera 20 seconds early
-        if (!canSwitchCam 
-            && (m % camSwitchInterval == camSwitchInterval - 1) 
-            && (s > 40))
+        if (!canSwitchCam && (m % camSwitchInterval == camSwitchInterval - 1) && (s > 40))
         {
-            cap++;
-            cap %= captures.length;
-            captureNext = captures[cap];
-            captureNext.start();
-            canSwitchCam = true;
+            turnOnNextCam();
         }
         
         pixels = getPixels(capture);
@@ -247,7 +244,44 @@ void draw()
 			println("loadedimages " + imagescounter % imagescount);
 			imagescounter++;
 		}
+
+        camStarted = true;
     }
+    else if (nullFrames > 10 && camStarted)
+    {
+        turnOnNextCam();
+        switchCams();
+        camStarted = false;
+    }
+}
+
+void turnOnNextCam()
+{
+    boolean flag = true;
+    while (flag)
+    {
+        flag = false;
+        cap++;
+        cap %= captures.length;
+        captureNext = captures[cap];
+        // make sure next camera is available
+        try {
+            captureNext.start();
+            canSwitchCam = true;
+        }
+        // move on to the next-next
+        catch (Exception e) {
+            flag = true;
+        }
+>>>>>>> 1decd7c2f27595f1e8f87af230e887afe9bb0388
+    }
+}
+
+void switchCams()
+{
+    capture.stop();
+    capture = captureNext;
+    canSwitchCam = false;
 }
 
 void saveImage()
