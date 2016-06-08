@@ -171,15 +171,15 @@ void draw()
                 try {
                     captureNext.start();
                     println("hey");
+                    canSwitchCam = true;
                 }
                 catch (Exception e) {
                     flag = true;
                     println("oops");
+                    cap++;
+                    cap %= captures.length;
+                    captureNext = captures[cap];
                 }
-                cap++;
-                cap %= captures.length;
-                captureNext = captures[cap];
-                canSwitchCam = true;
             }
         }
         
