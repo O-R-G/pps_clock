@@ -273,7 +273,6 @@ void turnOnNextCam()
         catch (Exception e) {
             flag = true;
         }
->>>>>>> 1decd7c2f27595f1e8f87af230e887afe9bb0388
     }
 }
 
