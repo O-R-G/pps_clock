@@ -45,6 +45,7 @@ int numSorts = 7;
 int numComps = 3;
 
 boolean startflag = false;
+int badcount = 0;
 
 String movsrc = "basement.mov";
 
@@ -96,6 +97,7 @@ ArrayList<Pixel> getPixels(Capture capture)
     
     if (capture.available())
     {
+        badcount = 0;
         capture.read();
     
         for (int j = 0; j < ypixels; j++)
@@ -113,6 +115,7 @@ ArrayList<Pixel> getPixels(Capture capture)
     else
     {
         println("crap!");
+        badcount++;
         return null;
     }
 }
@@ -225,7 +228,7 @@ void draw()
         }
         startflag = true;
     }
-    else if (startflag)
+    else if (badcount > 30)
     {
         turnOnNextCam();
         switchCams();
