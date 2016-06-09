@@ -15,22 +15,19 @@ Capture capture;
 Capture captureNext;
 
 int cap = 0;
-int camSwitchInterval = 15; // units = minutes
-boolean canSwitchCam = false;
+int camswitchinterval = 15; // units = minutes
+boolean canswitchcam = false;
 
-int saveImageInterval = 1;
-int saveImageLastMin = -1;
+int saveimageinterval = 1;
+int saveimagelastmin = -1;
 
-int sortSwitchInterval = 10;
-int sortSwitchLastMin = -1;
+int sortswitchinterval = 10;
+int sortswitchlastmin = -1;
 
-int compSwitchInterval = 5;
-int compSwitchLastMin = -1;
+int compswitchinterval = 5;
+int compswitchlastmin = -1;
 
-int imagesloadinterval = 1;
-int imagesloadlastmin = -1;
-
-int imagesplayinterval = 2;
+int imagesplayinterval = 3;
 int imagesplaylastmin = -1;
 
 int numpixels, ypixels, xpixels;
@@ -46,11 +43,11 @@ int count = 0;
 int sorttype = 1;
 int comptype = 0;
 
-int numSorts = 7;
-int numComps = 3;
+int numsorts = 7;
+int numcomps = 3;
 
-boolean camStarted = false;
-int nullFrames = 0;
+boolean camstarted = false;
+int nullframes = 0;
 
 PixelSort pixelsort;
 PixelComparator comp;
@@ -81,7 +78,7 @@ void setup()
         printArray(Capture.list()); 
     }
 
-	imagescount = int(60/saveImageInterval);
+	imagescount = int(60/saveimageinterval);
 	loadedimages = new PImage[imagescount];
 
     setResolution(pixelsize);
@@ -96,7 +93,7 @@ ArrayList<Pixel> getPixels(Capture capture)
     
     if (capture.available())
     {
-        nullFrames = 0;
+        nullframes = 0;
         capture.read();
     
         for (int j = 0; j < ypixels; j++)
@@ -113,7 +110,7 @@ ArrayList<Pixel> getPixels(Capture capture)
     }
     else
     {
-        nullFrames++;
+        nullframes++;
         return null;
     }
 }
@@ -126,51 +123,52 @@ void draw()
     m = minute();
     s = second();
     count++;
-	// println(m + ":" + s);
+	// println(nf(m,2) + ":" + nf(s,2));	// display timer
 
     // switch cameras
-    if (captures.length > 1 && m % camSwitchInterval == 0 && canSwitchCam)
+    if (captures.length > 1 && m % camswitchinterval == 0 && canswitchcam)
     {
         switchCams();
     }
     
     // start the next camera 20 seconds early
-    if (!canSwitchCam && (m % camSwitchInterval == camSwitchInterval - 1) && (s > 40))
+    if (!canswitchcam && (m % camswitchinterval == camswitchinterval - 1) && (s > 40))
     {
         turnOnNextCam();
     }
     
-    pixels = getPixels(capture);
+	if (!playimages)
+    	pixels = getPixels(capture);
 
-    // switch sort every compSwitchInterval minutes
+    // switch sort every compswitchinterval minutes
     // choose random sort
-    if (m % sortSwitchInterval == 0 && sortSwitchLastMin != m)
+    if (m % sortswitchinterval == 0 && sortswitchlastmin != m)
     {
         // choose random sort
-        sorttype = int(random(0, numSorts));
-        sortSwitchLastMin = m;
+        sorttype = int(random(0, numsorts));
+        sortswitchlastmin = m;
     }
 
-    // switch comps every compSwitchInterval minutes        
-    if (m % compSwitchInterval == 0 && compSwitchLastMin != m)
+    // switch comps every compswitchinterval minutes        
+    if (m % compswitchinterval == 0 && compswitchlastmin != m)
     {
         // choose random pixelcomp
-        comptype = int(random(0, numComps));
-        compSwitchLastMin = m;
+        comptype = int(random(0, numcomps));
+        compswitchlastmin = m;
     }
-	
-    // load images every imagesloadinterval minutes
-    if (m % imagesloadinterval == 0 && imagesloadlastmin != m)
+
+	// load images every imagesplayinterval-1 minutes
+    if (m % imagesplayinterval == imagesplayinterval-1 && imagesplaylastmin != m)
     {
 		loadedimages = new PImage[imagescount];
 		loadImages(imagescount, loadedimages);
-        imagesloadlastmin = m;
+        imagesplaylastmin = m;
     }
-
+	
     // play images every imagesplayinterval minutes        
-    if (m % imagesplayinterval == 0)
+    if (m % imagesplayinterval == 0 || playimages)
     {
-		if (imagesloaded(imagescount)) 
+		if (imagesLoaded(imagescount)) 
 		{
 			// draw images in sequence
 			image(loadedimages[imagescounter % imagescount],0,0);	
@@ -181,9 +179,6 @@ void draw()
 	{
 		playimages = false;
 	}
-    
-	println(playimages);
-	println("> " + (pixels != null));
 
     if (pixels != null && !playimages)
     {
@@ -195,35 +190,28 @@ void draw()
             for (int i = 0; i < xpixels; i++) {
                 int index = (j * xpixels + i) % numpixels;
                 color c = pixels.get(index).getColor();
-
-                // rgb 
-                // fill(red(c), green(c), blue(c), alpha);
-
-                // hsb, max s, b
-				// colorMode(HSB, 255);
-				// fill(hue(c), 255, 255, alpha);
-
-                // map hsb -> rgb
-                fill(hue(c), saturation(c), brightness(c), alpha);
-
-                rect(i*pixelsize, j*pixelsize, pixelsize, pixelsize);
+				
+				// map hsb -> rgb
+                fill(hue(c), saturation(c), brightness(c), alpha); 
+                
+				rect(i*pixelsize, j*pixelsize, pixelsize, pixelsize);
             }
         }
     
-        // save a frame every saveImageInterval minutes
-        if ((m % saveImageInterval == 0) && (m != saveImageLastMin) && s == 30)
+        // save a frame every saveimageinterval minutes
+        if ((m % saveimageinterval == 0) && (m != saveimagelastmin) && s == 30)
         {
             saveImage();
-            saveImageLastMin = m;		
+            saveimagelastmin = m;		
         }
 
-        camStarted = true;
+        camstarted = true;
     }
-    else if (nullFrames > 10 && camStarted)
+    else if (nullframes > 10 && camstarted)
     {
-        turnOnNextCam();
+		turnOnNextCam();
         switchCams();
-        camStarted = false;
+        camstarted = false;
     }
 }
 
@@ -239,7 +227,7 @@ void turnOnNextCam()
         // make sure next camera is available
         try {
             captureNext.start();
-            canSwitchCam = true;
+            canswitchcam = true;
         }
         // move on to the next-next
         catch (Exception e) {
@@ -252,7 +240,7 @@ void switchCams()
 {
     capture.stop();
     capture = captureNext;
-    canSwitchCam = false;
+    canswitchcam = false;
 }
 
 void saveImage()
@@ -284,7 +272,7 @@ void loadImages(int num, PImage[] stagedimages)
 	}
 }
 
-boolean imagesloaded(int num)
+boolean imagesLoaded(int num)
 {
 	for (int i = 0; i < num; i++) 
 	{
@@ -347,9 +335,11 @@ void keyPressed()
         case 'i':
 			loadedimages = new PImage[imagescount];
 	    	loadImages(imagescount, loadedimages);
+			playimages = true;
             break;
         case 'o':
 			loadedimages = new PImage[imagescount];
+			playimages = false;
             break;
         default:
             break;
