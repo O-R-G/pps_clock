@@ -116,41 +116,4 @@ public class PixelSort
         }
         return pixels;
     }
-    
-    protected ArrayList<Pixel> sortRowsWonky(ArrayList<Pixel> pixels, PixelComparator comp)
-    {
-        ArrayList<Pixel> sorted, row;
-        sorted = new ArrayList<Pixel>();
-    
-        for (int j = 0; j < ypixels; j++)
-        {
-            row = new ArrayList<Pixel>();
-            for (int i = 0; i < xpixels; i++)
-                row.add(pixels.get(j * xpixels + i));
-            Collections.sort(row, comp);
-            if (j % 2 == 0)
-                Collections.reverse(row);
-            sorted.addAll(row);
-        }
-        return sorted;
-    }
-
-    protected ArrayList<Pixel> sortColsVHS(ArrayList<Pixel> pixels, PixelComparator comp)
-    {
-        ArrayList<Pixel> sorted, col;
-        sorted = new ArrayList<Pixel>();
-    
-        for (int j = 0; j < xpixels; j++)
-        {
-            col = new ArrayList<Pixel>();
-            for (int i = 0; i < ypixels; i++)
-                col.add(pixels.get(j * ypixels + i));
-        
-            Collections.sort(col, comp);
-            if (j % 2 == 0)
-                Collections.reverse(col);
-            sorted.addAll(col);
-        }
-        return sorted;
-    }
 }
