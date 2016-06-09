@@ -43,8 +43,8 @@ int count = 0;
 int sorttype = 1;
 int comptype = 0;
 
-int numsorts = 7;
-int numcomps = 3;
+final int numsorts = 6;
+final int numcomps = 2;
 
 boolean camstarted = false;
 int nullframes = 0;
@@ -124,6 +124,7 @@ void draw()
     s = second();
     count++;
 	println(nf(m,2) + ":" + nf(s,2));	// display timer
+	println(sorttype % numsorts + "," + comptype % numcomps);
 
 	// live
 

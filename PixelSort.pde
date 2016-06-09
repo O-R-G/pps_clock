@@ -12,7 +12,7 @@ public class PixelSort
     {
         ArrayList<Pixel> sorted = plist;
         
-        switch (ctype % 3)
+        switch (ctype % 2)
         {
             case 0:
                 comp = new HueComparator();
@@ -20,34 +20,33 @@ public class PixelSort
             case 1:
                 comp = new SaturationComparator();
                 break;
-            case 2:
-                comp = new BrightnessComparator();
-                break;
         }
         
-        switch (stype % 7)
+        switch (stype % 6)
         {
             case 0:
+				sortLinear(sorted, comp);
+                // Collections.sort(sorted, comp);
                 break;
             case 1:
-                Collections.sort(sorted, comp);
-                break;
-            case 2:
                 sorted = this.sortRows(sorted, comp);
                 break;
+            case 2:
+                sorted = this.sortCols(sorted, comp);
+                break;
             case 3:
+                sorted = this.sortRows(sorted, comp);
                 sorted = this.sortCols(sorted, comp);
                 break;
             case 4:
-                sorted = this.sortRows(sorted, comp);
                 sorted = this.sortCols(sorted, comp);
+                sorted = this.sortRows(sorted, comp);
                 break;
             case 5:
-                sorted = this.sortCols(sorted, comp);
-                sorted = this.sortRows(sorted, comp);
+				sortLinearReverse(sorted, comp);
                 break;
-            case 6:
-                sorted = this.knuthShuffle(sorted);
+			// no sorting
+            default:
                 break;
         }
 
@@ -103,17 +102,21 @@ public class PixelSort
      
          return sorted;
     }
-    
-    protected ArrayList<Pixel> knuthShuffle(ArrayList<Pixel> pixels)
+
+    protected ArrayList<Pixel> sortLinear(ArrayList<Pixel> plist, PixelComparator comp)
     {
-        int min, max;
-        min = 0;
-        max = pixels.size();
-        for (int i = max; i > min; i--)
-        {
-            int j = int(random(min, max));
-            Collections.swap(pixels, j, i-1);
-        }
-        return pixels;
+        ArrayList<Pixel> sorted = plist;
+                
+		Collections.sort(sorted, comp);
+		return sorted;
+    }
+
+    protected ArrayList<Pixel> sortLinearReverse(ArrayList<Pixel> plist, PixelComparator comp)
+    {
+        ArrayList<Pixel> sorted = plist;
+                
+		Collections.sort(sorted, comp);
+		Collections.reverse(sorted);
+		return sorted;
     }
 }
