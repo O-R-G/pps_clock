@@ -1,0 +1,21 @@
+// this is where images are saved to
+String basepath = "/Users/reinfurt/_pps_out/";
+
+public void settings()
+{
+    try
+    {
+        // make sure the size of captures is correct!
+        captures = new Capture[1];
+        captures[0] = new Capture(this, "name=FaceTime Camera (Built-in),size=640x480,fps=30");
+    }
+    catch (Exception e)
+    {
+        e.printStackTrace();
+        printArray(Capture.list());
+        println("** No camera found . . . exiting. **");
+        exit();
+    }
+    // size(1920, 1080);
+    size(640, 480);
+}
