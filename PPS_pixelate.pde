@@ -18,14 +18,20 @@ int cap = 0;
 int camSwitchInterval = 15; // units = minutes
 boolean canSwitchCam = false;
 
-int saveImageLastMin = -1;
 int saveImageInterval = 1;
+int saveImageLastMin = -1;
 
 int sortSwitchInterval = 10;
 int sortSwitchLastMin = -1;
 
 int compSwitchInterval = 5;
 int compSwitchLastMin = -1;
+
+int imagesloadinterval = 1;
+int imagesloadlastmin = -1;
+
+int imagesplayinterval = 2;
+int imagesplaylastmin = -1;
 
 int numpixels, ypixels, xpixels;
 
@@ -34,7 +40,7 @@ int inpixelsize = 4;
 int pixelsize = 6;
 int pixelstep = 1;
 
-int alpha = 100;                     // [0-255]
+int alpha = 100; // [0-255]
 int count = 0;
 
 int sorttype = 1;
@@ -50,6 +56,7 @@ PixelSort pixelsort;
 PixelComparator comp;
 
 PImage[] loadedimages;
+boolean playimages;
 
 int imagescount;
 int imagescounter;
@@ -119,7 +126,8 @@ void draw()
     m = minute();
     s = second();
     count++;
-    
+	// println(m + ":" + s);
+
     // switch cameras
     if (captures.length > 1 && m % camSwitchInterval == 0 && canSwitchCam)
     {
@@ -150,8 +158,34 @@ void draw()
         comptype = int(random(0, numComps));
         compSwitchLastMin = m;
     }
+	
+    // load images every imagesloadinterval minutes
+    if (m % imagesloadinterval == 0 && imagesloadlastmin != m)
+    {
+		loadedimages = new PImage[imagescount];
+		loadImages(imagescount, loadedimages);
+        imagesloadlastmin = m;
+    }
+
+    // play images every imagesplayinterval minutes        
+    if (m % imagesplayinterval == 0)
+    {
+		if (imagesloaded(imagescount)) 
+		{
+			// draw images in sequence
+			image(loadedimages[imagescounter % imagescount],0,0);	
+			playimages = true;
+			imagescounter++;
+		} 
+    } else 
+	{
+		playimages = false;
+	}
     
-    if (pixels != null)
+	println(playimages);
+	println("> " + (pixels != null));
+
+    if (pixels != null && !playimages)
     {
         // sort!
         pixels = pixelsort.sort(pixels, comptype, sorttype);
@@ -182,17 +216,6 @@ void draw()
             saveImage();
             saveImageLastMin = m;		
         }
-
-		// ** dev **
-		// https://forum.processing.org/one/topic/listing-last-10-modified-files-in-directory
-
-		if (imagesloaded(imagescount)) 
-		{
-			// draw images in sequence
-			image(loadedimages[imagescounter % imagescount],0,0);	
-			println("loadedimages " + imagescounter % imagescount);
-			imagescounter++;
-		}
 
         camStarted = true;
     }
@@ -249,15 +272,16 @@ void saveImage()
 void loadImages(int num, PImage[] stagedimages)
 {
 	// loadedimages[] passed as pointer (no need to return)
+	// https://forum.processing.org/one/topic/listing-last-10-modified-files-in-directory
 
 	java.io.File folder = new java.io.File(dataPath(basepath));
  	String[] filenames = folder.list(pngFilter);
 	filenames = reverse(filenames);		// last modified
 	for (int i = 0; i < num; i++) 
 	{
+		println("Loading images . . .");
 		stagedimages[i] = requestImage(basepath.concat(filenames[i]));
 	}
-	println("Loading images . . .");
 }
 
 boolean imagesloaded(int num)
