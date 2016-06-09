@@ -27,9 +27,6 @@ int sortSwitchLastMin = -1;
 int compSwitchInterval = 5;
 int compSwitchLastMin = -1;
 
-boolean usb;                        // usb cam
-boolean hsb;                        // enforce HSB color model
-
 int numpixels, ypixels, xpixels;
 
 int outpixelsize = 6;
@@ -49,8 +46,6 @@ int numComps = 3;
 boolean camStarted = false;
 int nullFrames = 0;
 
-String movsrc = "basement.mov";
-
 PixelSort pixelsort;
 PixelComparator comp;
 
@@ -67,28 +62,16 @@ void setup()
 	noCursor();
 
     // start the cameras
-    if (usb)
+    try 
     {
-        try 
-        {
-            println("Using usb camera . . . ");
-            capture = captures[cap];
-            capture.start();
-        } 
-        catch (Exception e) 
-        {
-            usb = false;
-            e.printStackTrace();
-            printArray(Capture.list()); 
-        }
+        println("Using usb camera . . . ");
+        capture = captures[cap];
+        capture.start();
     } 
-    else
+    catch (Exception e) 
     {
-        println("Using local mov . . . ");
-        mov = new Movie(this, movsrc);
-        mov.loop();
-        mov.read();
-        surface.setSize(mov.width, mov.height);
+        e.printStackTrace();
+        printArray(Capture.list()); 
     }
 
 	imagescount = int(60/saveImageInterval);
@@ -128,29 +111,6 @@ ArrayList<Pixel> getPixels(Capture capture)
     }
 }
 
-ArrayList<Pixel> getPixelsFromMov(Movie mov)
-{
-    ArrayList<Pixel> pixels = new ArrayList<Pixel>();
-    int x, y;
-    color c;
-    
-    if (mov.available())
-        mov.read();
-    
-    for (int j = 0; j < ypixels; j++)
-    {
-        y = (int) (j * pixelsize);
-        for (int i = 0; i < xpixels; i++)
-        {
-            x = (int) (i * pixelsize);
-            c = mov.get(x, y);
-            pixels.add(new Pixel(c));
-        }
-    }
-    
-    return pixels;
-}
-
 void draw()
 {
     ArrayList<Pixel> pixels = new ArrayList<Pixel>();
@@ -161,26 +121,19 @@ void draw()
     count++;
     
     // switch cameras
-    if (usb)
-    {  
-        if (captures.length > 1 && m % camSwitchInterval == 0 && canSwitchCam)
-        {
-            switchCams();
-        }
-        
-        // start the next camera 20 seconds early
-        if (!canSwitchCam && (m % camSwitchInterval == camSwitchInterval - 1) && (s > 40))
-        {
-            turnOnNextCam();
-        }
-        
-        pixels = getPixels(capture);
-    }
-    else
+    if (captures.length > 1 && m % camSwitchInterval == 0 && canSwitchCam)
     {
-        pixels = getPixelsFromMov(mov);
+        switchCams();
     }
     
+    // start the next camera 20 seconds early
+    if (!canSwitchCam && (m % camSwitchInterval == camSwitchInterval - 1) && (s > 40))
+    {
+        turnOnNextCam();
+    }
+    
+    pixels = getPixels(capture);
+
     // switch sort every compSwitchInterval minutes
     // choose random sort
     if (m % sortSwitchInterval == 0 && sortSwitchLastMin != m)
@@ -231,11 +184,7 @@ void draw()
         }
 
 		// ** dev **
-		// can even read these into pixels array perhaps
-		// and should move up in the draw loop
-		// so that it is not drawing on top of the other
-		// how to handle timing ?
-		// or alternately, save states and replay from that
+		// https://forum.processing.org/one/topic/listing-last-10-modified-files-in-directory
 
 		if (imagesloaded(imagescount)) 
 		{
@@ -299,7 +248,7 @@ void saveImage()
 
 void loadImages(int num, PImage[] stagedimages)
 {
-	// loadedimages is an array passed as a pointer no need to return value
+	// loadedimages[] passed as pointer (no need to return)
 
 	java.io.File folder = new java.io.File(dataPath(basepath));
  	String[] filenames = folder.list(pngFilter);
@@ -346,13 +295,6 @@ void keyPressed()
 {
     switch(key)
     {
-        case ' ':
-            hsb = !hsb;
-            if (hsb)
-                colorMode(HSB, 255);
-            if (!hsb)
-                colorMode(RGB, 255);
-            break;
         case 'd':
             saveImage();
             break;

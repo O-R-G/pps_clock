@@ -4,9 +4,7 @@ String basepath = "/Users/icp/Dropbox/clock-images/lefty/";
 public void settings()
 {
     try
-    {
-        usb = true;
-        
+    {        
         // make sure the size of captures is correct!
         captures = new Capture[4];
         captures[0] = new Capture(this, "name=HD USB Camera,size=1296x972,fps=30");
@@ -16,9 +14,10 @@ public void settings()
     }
     catch (Exception e)
     {
-        usb = false;
         e.printStackTrace();
         printArray(Capture.list());
+		println("** No camera found . . . exiting. **");
+        exit();
     }
     size(1920, 1080);
 }
