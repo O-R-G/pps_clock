@@ -123,15 +123,15 @@ void draw()
     m = minute();
     s = second();
     count++;
-	// println(nf(m,2) + ":" + nf(s,2));	// display timer
+	println(nf(m,2) + ":" + nf(s,2));	// display timer
 
-    // switch cameras
+	// live
+
     if (captures.length > 1 && m % camswitchinterval == 0 && canswitchcam)
     {
         switchCams();
     }
     
-    // start the next camera 20 seconds early
     if (!canswitchcam && (m % camswitchinterval == camswitchinterval - 1) && (s > 40))
     {
         turnOnNextCam();
@@ -140,16 +140,12 @@ void draw()
 	if (!playimages)
     	pixels = getPixels(capture);
 
-    // switch sort every compswitchinterval minutes
-    // choose random sort
     if (m % sortswitchinterval == 0 && sortswitchlastmin != m)
     {
-        // choose random sort
         sorttype = int(random(0, numsorts));
         sortswitchlastmin = m;
     }
 
-    // switch comps every compswitchinterval minutes        
     if (m % compswitchinterval == 0 && compswitchlastmin != m)
     {
         // choose random pixelcomp
@@ -157,35 +153,10 @@ void draw()
         compswitchlastmin = m;
     }
 
-	// load images every imagesplayinterval-1 minutes
-    if (m % imagesplayinterval == imagesplayinterval-1 && imagesplaylastmin != m)
-    {
-		loadedimages = new PImage[imagescount];
-		loadImages(imagescount, loadedimages);
-        imagesplaylastmin = m;
-    }
-	
-    // play images every imagesplayinterval minutes        
-    if (m % imagesplayinterval == 0 || playimages)
-    {
-		if (imagesLoaded(imagescount)) 
-		{
-			// draw images in sequence
-			image(loadedimages[imagescounter % imagescount],0,0);	
-			playimages = true;
-			imagescounter++;
-		} 
-    } else 
-	{
-		playimages = false;
-	}
-
     if (pixels != null && !playimages)
     {
-        // sort!
         pixels = pixelsort.sort(pixels, comptype, sorttype);
 
-        // display
         for (int j = 0; j < ypixels; j++) {
             for (int i = 0; i < xpixels; i++) {
                 int index = (j * xpixels + i) % numpixels;
@@ -198,7 +169,6 @@ void draw()
             }
         }
     
-        // save a frame every saveimageinterval minutes
         if ((m % saveimageinterval == 0) && (m != saveimagelastmin) && s == 30)
         {
             saveImage();
@@ -213,6 +183,34 @@ void draw()
         switchCams();
         camstarted = false;
     }
+
+	// playback
+
+    if (m % imagesplayinterval == imagesplayinterval-1 && imagesplaylastmin != m)
+    {
+		loadedimages = new PImage[imagescount];
+		loadImages(imagescount, loadedimages);
+        imagesplaylastmin = m;
+    }
+	
+    if (m % imagesplayinterval == 0 || playimages)
+    {
+		if (imagesLoaded(imagescount)) 
+		{
+			if (imagescounter < imagescount) 
+			{
+				// draw images in sequence
+				image(loadedimages[imagescounter],0,0);	
+				imagescounter++;
+				println(imagescounter);
+				playimages = true;
+			}
+			else 
+			{
+				playimages = false;
+			}
+		}
+	}
 }
 
 void turnOnNextCam()
@@ -270,6 +268,7 @@ void loadImages(int num, PImage[] stagedimages)
 		println("Loading images . . .");
 		stagedimages[i] = requestImage(basepath.concat(filenames[i]));
 	}
+	imagescounter = 0; 	// reset for display
 }
 
 boolean imagesLoaded(int num)
