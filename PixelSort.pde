@@ -25,8 +25,7 @@ public class PixelSort
         switch (stype % 6)
         {
             case 0:
-				sortLinear(sorted, comp);
-                // Collections.sort(sorted, comp);
+                sorted = this.sortLinear(sorted, comp);
                 break;
             case 1:
                 sorted = this.sortRows(sorted, comp);
@@ -43,9 +42,8 @@ public class PixelSort
                 sorted = this.sortRows(sorted, comp);
                 break;
             case 5:
-				sortLinearReverse(sorted, comp);
+                sorted = this.sortLinearReverse(sorted, comp);
                 break;
-			// no sorting
             default:
                 break;
         }
