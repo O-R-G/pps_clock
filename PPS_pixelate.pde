@@ -21,13 +21,13 @@ boolean canswitchcam = false;
 int saveimageinterval = 1;
 int saveimagelastmin = -1;
 
-int sortswitchinterval = 10;
+int sortswitchinterval = 60;
 int sortswitchlastmin = -1;
 
-int compswitchinterval = 5;
+int compswitchinterval = 30;
 int compswitchlastmin = -1;
 
-int imagesplayinterval = 3;
+int imagesplayinterval = 60;
 int imagesplaylastmin = -1;
 
 int numpixels, ypixels, xpixels;
@@ -123,8 +123,10 @@ void draw()
     m = minute();
     s = second();
     count++;
-	println(nf(m,2) + ":" + nf(s,2));	// display timer
-	println(sorttype % numsorts + "," + comptype % numcomps);
+
+	// display timer debug
+	println(nf(m,2) + ":" + nf(s,2));	
+	// println(sorttype % numsorts + "," + comptype % numcomps);
 
 	// live
 
