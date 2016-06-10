@@ -125,6 +125,8 @@ void draw()
     count++;
 
 	// display timer debug
+    // to test local, change time with `date mmddHHMMyy`
+
 	println(nf(m,2) + ":" + nf(s,2));	
 	// println(sorttype % numsorts + "," + comptype % numcomps);
 
