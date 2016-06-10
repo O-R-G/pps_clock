@@ -189,6 +189,7 @@ void draw()
         camstarted = false;
     }
 
+/*
 	// playback
 
     if (m % imagesplayinterval == imagesplayinterval-1 && imagesplaylastmin != m)
@@ -216,6 +217,7 @@ void draw()
 			}
 		}
 	}
+	*/
 }
 
 void turnOnNextCam()
