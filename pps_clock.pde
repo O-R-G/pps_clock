@@ -189,35 +189,19 @@ void draw()
         camstarted = false;
     }
 
-/*
 	// playback
 
     if (m % imagesplayinterval == imagesplayinterval-1 && imagesplaylastmin != m)
     {
-		loadedimages = new PImage[imagescount];
 		loadImages(imagescount, loadedimages);
         imagesplaylastmin = m;
     }
 	
     if (m % imagesplayinterval == 0 || playimages)
     {
-		if (imagesLoaded(imagescount)) 
-		{
-			if (imagescounter < imagescount) 
-			{
-				// draw images in sequence
-				image(loadedimages[imagescounter],0,0);	
-				imagescounter++;
-				println(imagescounter);
-				playimages = true;
-			}
-			else 
-			{
-				playimages = false;
-			}
-		}
+	    if (imagesLoaded(imagescount))
+        	playImages(imagescount, loadedimages, 1);
 	}
-	*/
 }
 
 void turnOnNextCam()
@@ -270,21 +254,46 @@ void loadImages(int num, PImage[] stagedimages)
 	java.io.File folder = new java.io.File(dataPath(basepath));
  	String[] filenames = folder.list(pngFilter);
 	filenames = reverse(filenames);		// last modified
-	for (int i = 0; i < num; i++) 
+
+	int numfiles = min(num, filenames.length);
+	println("Loading " + numfiles + " images . . .");
+
+	for (int i = 0; i < numfiles; i++) 
 	{
-		println("Loading images . . .");
 		stagedimages[i] = requestImage(basepath.concat(filenames[i]));
 	}
+
+	imagescount = numfiles; // shorter if necc
 	imagescounter = 0; 	// reset for display
+}
+
+void playImages(int num, PImage[] stagedimages, int loops)
+{
+	if (imagescounter < num * loops)
+	{               
+		image(stagedimages[imagescounter % num],0,0);
+		imagescounter++;
+		playimages = true;
+	}
+	else
+	{
+		playimages = false;
+	}
 }
 
 boolean imagesLoaded(int num)
 {
+	// there is a fly in this ointment
+
 	for (int i = 0; i < num; i++) 
 	{
-	    if ((loadedimages[i] == null) || (loadedimages[i].width == 0) || (loadedimages[i].width == -1))
+	    if ((loadedimages[i] == null) || (loadedimages[i].width == 0) || (loadedimages[i].width == -1)) 
+		{
+			// println("** Images not loaded. **");
+			// playimages = false;
 			return false;
-	}	
+		}
+	}
 	return true;
 }
 
@@ -339,11 +348,13 @@ void keyPressed()
             println("alpha : " + alpha);
             break;
         case 'i':
+			imagescount = int(60/saveimageinterval);
 			loadedimages = new PImage[imagescount];
 	    	loadImages(imagescount, loadedimages);
 			playimages = true;
             break;
         case 'o':
+			imagescount = int(60/saveimageinterval);
 			loadedimages = new PImage[imagescount];
 			playimages = false;
             break;

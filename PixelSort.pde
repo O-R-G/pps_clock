@@ -22,7 +22,7 @@ public class PixelSort
                 break;
         }
         
-        switch (stype % 6)
+        switch (stype % 7)
         {
             case 0:
                 sorted = this.sortLinear(sorted, comp);
@@ -44,7 +44,7 @@ public class PixelSort
             case 5:
                 sorted = this.sortLinearReverse(sorted, comp);
                 break;
-            default:
+            case 6:
                 break;
         }
 
