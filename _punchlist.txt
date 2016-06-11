@@ -1,0 +1,8 @@
+- imageplayback logic
+- timing (step thru sorts)
+- timing (play non-adjusted)
+- pixel size (clean up logic for 1280 x 720)
+- switch camera robustness check
+
+- lefty / righty restart (crashes when pps_clock is a startup item)
+- lefty / righty universal access settings (mouse)
