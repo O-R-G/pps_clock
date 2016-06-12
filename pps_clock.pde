@@ -18,34 +18,19 @@ PixelSort pixelsort;
 PixelComparator comp;
 PImage[] loadedimages;
 
-int camswitchinterval = 15; // units = minutes
-int saveimageinterval = 1;
-int saveimagelastmin = -1;
-int nosortswitchinterval = 2;
-int nosortswitchlastmin = -1;
-int sortswitchinterval = 10;
-int sortswitchlastmin = -1;
-int compswitchinterval = 120;
-int compswitchlastmin = -1;
-int imagesloadinterval = 59;
-int imagesloadlastmin = -1;
-int imagesplayinterval = 60;
-
-int cap = 0;
+int cap;
 int numpixels, ypixels, xpixels;
-int outpixelsize = 6;
-int inpixelsize = 4;
-int pixelsize = 6;
-int pixelstep = 1;
+int pixelsize = 4;
 
 int alpha = 100; // [0-255]
-int sorttype = 0;
-int comptype = 0;
-int nullframes = 0;
+int sorttype;
+int comptype;
+int nullframes;
 int numsorts = 6;
 int numcomps = 2;
-int imagescount;
+int imagescount = 60; // #/hr
 int imagescounter;
+int lasthour;
 int lastmin;
 int lastsec;
 
@@ -70,7 +55,6 @@ void setup() {
         printArray(Capture.list()); 
     }
 
-	imagescount = int(60/saveimageinterval);
 	loadedimages = new PImage[imagescount];
 
     setResolution(pixelsize);
@@ -88,23 +72,19 @@ void draw() {
 	if (m == 0) m = 60; // avoid 0 % 
 	if (s == 0) s = 60;
 
-    // `date mmddHHMMyy.ss`
-	if (verbose && s != lastsec)
+	lasthour = checkHour(h, lasthour);
+	lastmin = checkMin(m, lastmin);
+    lastsec = checkSec(s, lastsec);
+
+    // use `date mmddHHMMyy.ss` for dev
+	if (verbose)
 		println(nf(h,2) + ":" + nf(m,2) + ":" + nf(s,2));	
 
 	// scale(0.5);
 
-	// timers
-
-	lastmin = checkMin(m, lastmin);
-
-	// playback
-
 	if (playimages) 
 		if (imagesLoaded(imagescount))
 			playImages(imagescount, loadedimages, 1);
-
-	// live
 
 	if (!playingimages)
     	pixels = getPixels(capture);
@@ -120,37 +100,44 @@ void draw() {
 				rect(i*pixelsize, j*pixelsize, pixelsize, pixelsize);
             }
         }
-        if ((m % saveimageinterval == 0) && (m != saveimagelastmin) && s == 30) {
-            saveImage();
-            saveimagelastmin = m;		
-        }
         camstarted = true;
     } else if (nullframes > 10 && camstarted) {
+		// causing some problems
+        camstarted = false;
 		turnOnNextCam();
         switchCam();
-        camstarted = false;
     }
+}
 
-	lastsec = s;
+
+// timers
+
+int checkHour(int thish, int thislasthour) {
+	if (thish != thislasthour) {
+    	switch (thish) {
+			case 12:
+			case 24:
+				// new comp
+				comptype++;	
+				comptype %= numcomps;
+                if (verbose) println("+ " + thish);
+                thislasthour = thish;
+				break;
+        	default:
+				thislasthour = thish - 1;
+				break;
+		}
+	}
+	return thislasthour;
 }
 
 int checkMin(int thism, int thislastmin) {
-	// minutes
 	if (thism != thislastmin) {
     	switch (thism) {
 			case 5: 
 				// new sort
 				sorttype++;
 		 		sorttype %= numsorts;
-				if (verbose) println("+ " + thism);
-				thislastmin = thism;
-				break;
-			case 6: 
-			case 7: 
-			case 8: 
-				// new comp
-				comptype++;	
-				comptype %= numcomps;
 				if (verbose) println("+ " + thism);
 				thislastmin = thism;
 				break;
@@ -174,8 +161,11 @@ int checkMin(int thism, int thislastmin) {
 				thislastmin = thism;
 				break;
 			case 59:
-				// loadimages
+				// load images
+				imagescount = 60;
+				loadedimages = new PImage[imagescount];
 				loadImages(imagescount, loadedimages);
+				playimages = true;
 				// next cam
 				turnOnNextCam();
 				if (verbose) println("+ " + thism);
@@ -183,7 +173,7 @@ int checkMin(int thism, int thislastmin) {
             	break;
 			case 60:
 				// nosort
-				sorttype = 10; // default no sort
+				sorttype = 10; // out of range -> default:
 				// playimages
 			    if (imagesLoaded(imagescount))
         			playImages(imagescount, loadedimages, 1);
@@ -201,6 +191,26 @@ int checkMin(int thism, int thislastmin) {
 	return thislastmin;
 }
 
+int checkSec(int thiss, int thislastsec) {
+	if (thiss != thislastsec) {
+    	switch (thiss) {
+			case 60: 
+				// save image
+				saveImage();
+                if (verbose) println("+ " + thiss);
+                thislastsec = thiss;
+				break;
+        	default:
+				thislastsec = thiss - 1;
+				break;
+		}
+	}
+	return thislastsec;
+}
+
+
+// capture
+
 ArrayList<Pixel> getPixels(Capture capture) {
     ArrayList<Pixel> pixels = new ArrayList<Pixel>();
     int x, y;
@@ -209,9 +219,9 @@ ArrayList<Pixel> getPixels(Capture capture) {
         nullframes = 0;
         capture.read();
         for (int j = 0; j < ypixels; j++) {
-            y = (int) (j * inpixelsize);
+            y = (int) (j * pixelsize);
             for (int i = 0; i < xpixels; i++) {
-                x = (int) (i * inpixelsize);
+                x = (int) (i * pixelsize);
                 c = capture.get(x, y);
                 pixels.add(new Pixel(c));
             }
@@ -222,6 +232,31 @@ ArrayList<Pixel> getPixels(Capture capture) {
         return null;
     }
 }
+
+void turnOnNextCam() {
+    boolean flag = true;
+    while (flag) {
+        flag = false;
+        cap++;
+        cap %= captures.length;
+        captureNext = captures[cap];
+        try {
+            captureNext.start();
+            canswitchcam = true;
+        } catch (Exception e) {
+            flag = true;
+        }
+    }
+}
+
+void switchCam() {
+    capture.stop();
+    capture = captureNext;
+    canswitchcam = false;
+}
+
+
+// images
 
 void saveImage() {
     SimpleDateFormat df;
@@ -277,33 +312,13 @@ final FilenameFilter pngFilter = new FilenameFilter() {
   	}
 };
 
-void turnOnNextCam() {
-    boolean flag = true;
-    while (flag) {
-        flag = false;
-        cap++;
-        cap %= captures.length;
-        captureNext = captures[cap];
-        try {
-            captureNext.start();
-            canswitchcam = true;
-        } catch (Exception e) {
-            flag = true;
-        }
-    }
-}
 
-void switchCam() {
-    capture.stop();
-    capture = captureNext;
-    canswitchcam = false;
-}
+// utility
 
 void setResolution(int thispixelsize) {
     pixelsize = thispixelsize;
     if (pixelsize == 0)
         pixelsize = 1; 
-    
     xpixels = width / pixelsize;
     ypixels = height / pixelsize;
     numpixels = xpixels * ypixels;
@@ -356,13 +371,13 @@ void keyPressed() {
             println("alpha : " + alpha);
             break;
         case 'i':
-			imagescount = int(60/saveimageinterval);
+			imagescount = 60;
 			loadedimages = new PImage[imagescount];
 	    	loadImages(imagescount, loadedimages);
 			playimages = true;
             break;
         case 'o':
-			imagescount = int(60/saveimageinterval);
+			imagescount = 60;
 			loadedimages = new PImage[imagescount];
 			playimages = false;
             break;
