@@ -9,7 +9,7 @@ public class PixelSort {
     public ArrayList<Pixel> sort(ArrayList<Pixel> plist, int ctype, int stype) {
         ArrayList<Pixel> sorted = plist;
         
-        switch (ctype % 2) {
+        switch (ctype) {
             case 0:
                 comp = new HueComparator();
                 break;
@@ -18,7 +18,7 @@ public class PixelSort {
                 break;
         }
         
-        switch (stype % 7) {
+        switch (stype) {
             case 0:
                 sorted = this.sortLinear(sorted, comp);
                 break;
@@ -39,7 +39,7 @@ public class PixelSort {
             case 5:
                 sorted = this.sortLinearReverse(sorted, comp);
                 break;
-            case 6:
+            default:
                 break;
         }
 

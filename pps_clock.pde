@@ -21,9 +21,11 @@ PImage[] loadedimages;
 int camswitchinterval = 15; // units = minutes
 int saveimageinterval = 1;
 int saveimagelastmin = -1;
-int sortswitchinterval = 60;
+int nosortswitchinterval = 2;
+int nosortswitchlastmin = -1;
+int sortswitchinterval = 10;
 int sortswitchlastmin = -1;
-int compswitchinterval = 30;
+int compswitchinterval = 120;
 int compswitchlastmin = -1;
 int imagesloadinterval = 59;
 int imagesloadlastmin = -1;
@@ -37,7 +39,7 @@ int pixelsize = 6;
 int pixelstep = 1;
 
 int alpha = 100; // [0-255]
-int sorttype = 1;
+int sorttype = 0;
 int comptype = 0;
 int nullframes = 0;
 int numsorts = 6;
@@ -72,28 +74,6 @@ void setup() {
     pixelsort = new PixelSort(xpixels, ypixels);
 }
 
-ArrayList<Pixel> getPixels(Capture capture) {
-    ArrayList<Pixel> pixels = new ArrayList<Pixel>();
-    int x, y;
-    color c;
-    if (capture.available()) {
-        nullframes = 0;
-        capture.read();
-        for (int j = 0; j < ypixels; j++) {
-            y = (int) (j * inpixelsize);
-            for (int i = 0; i < xpixels; i++) {
-                x = (int) (i * inpixelsize);
-                c = capture.get(x, y);
-                pixels.add(new Pixel(c));
-            }
-        }
-        return pixels;
-    } else {
-        nullframes++;
-        return null;
-    }
-}
-
 void draw() {
     ArrayList<Pixel> pixels = new ArrayList<Pixel>();
     int m, s;
@@ -102,10 +82,12 @@ void draw() {
     s = second();
 	if (m == 0) m = 60; 
 	if (s == 0) s = 60;
- 
+
     // `date mmddHHMMyy.ss`
 	println(nf(m,2) + ":" + nf(s,2));	
-	// println(sorttype % numsorts + "," + comptype % numcomps);
+	println(sorttype + "," + comptype);
+
+	// scale(0.5);
 
 	// live
 
@@ -120,14 +102,20 @@ void draw() {
 	if (!playingimages)
     	pixels = getPixels(capture);
  
+	if (m % nosortswitchinterval == 0 && nosortswitchlastmin != m) {
+		sorttype = 10; // out of range
+        nosortswitchlastmin = m;
+    }
+
 	if (m % sortswitchinterval == 0 && sortswitchlastmin != m) {
-        sorttype = int(random(0, numsorts));
+		sorttype++;
+		sorttype %= numsorts;
         sortswitchlastmin = m;
     }
 
     if (m % compswitchinterval == 0 && compswitchlastmin != m) {
-        // choose random pixelcomp
-        comptype = int(random(0, numcomps));
+		comptype++;
+		comptype %= numcomps;
         compswitchlastmin = m;
     }
 
@@ -166,26 +154,26 @@ void draw() {
 	}
 }
 
-void turnOnNextCam() {
-    boolean flag = true;
-    while (flag) {
-        flag = false;
-        cap++;
-        cap %= captures.length;
-        captureNext = captures[cap];
-        try {
-            captureNext.start();
-            canswitchcam = true;
-        } catch (Exception e) {
-            flag = true;
+ArrayList<Pixel> getPixels(Capture capture) {
+    ArrayList<Pixel> pixels = new ArrayList<Pixel>();
+    int x, y;
+    color c;
+    if (capture.available()) {
+        nullframes = 0;
+        capture.read();
+        for (int j = 0; j < ypixels; j++) {
+            y = (int) (j * inpixelsize);
+            for (int i = 0; i < xpixels; i++) {
+                x = (int) (i * inpixelsize);
+                c = capture.get(x, y);
+                pixels.add(new Pixel(c));
+            }
         }
+        return pixels;
+    } else {
+        nullframes++;
+        return null;
     }
-}
-
-void switchCams() {
-    capture.stop();
-    capture = captureNext;
-    canswitchcam = false;
 }
 
 void saveImage() {
@@ -242,6 +230,28 @@ final FilenameFilter pngFilter = new FilenameFilter() {
   	}
 };
 
+void turnOnNextCam() {
+    boolean flag = true;
+    while (flag) {
+        flag = false;
+        cap++;
+        cap %= captures.length;
+        captureNext = captures[cap];
+        try {
+            captureNext.start();
+            canswitchcam = true;
+        } catch (Exception e) {
+            flag = true;
+        }
+    }
+}
+
+void switchCams() {
+    capture.stop();
+    capture = captureNext;
+    canswitchcam = false;
+}
+
 void setResolution(int thispixelsize) {
     pixelsize = thispixelsize;
     if (pixelsize == 0)
@@ -260,10 +270,12 @@ void keyPressed() {
             saveImage();
             break;
         case 's':
-            sorttype++;
+	        sorttype++;
+    	    sorttype %= numsorts;
             break;
         case 'c':
             comptype++;
+    	    comptype %= numcomps;
             break;
         case '+':       // pixelsize++
             setResolution(pixelsize+1);
