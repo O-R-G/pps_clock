@@ -1,13 +1,12 @@
 + imageplayback logic
 + loadImages logic
 + what happens if no images are loaded or imagesLoaded returns false
-  prob need new boolean to check and recover
 - what happens if one image is corrupt or doesnt load?
 - timing (step thru sorts)
 - timing (play non-adjusted)
 - pixel size (clean up logic for 1280 x 720)
-- what about scale(2)? that might be faster
+- scale(2)? that might be faster
 - switch camera robustness check
 
-- lefty / righty restart (crashes when pps_clock is a startup item)
-- lefty / righty universal access settings (mouse)
+/ lefty / righty restart (crashes when pps_clock is a startup item)
+/ lefty / righty universal access settings (mouse)
