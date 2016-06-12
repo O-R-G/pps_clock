@@ -14,66 +14,53 @@ Capture[] captures;
 Capture capture;
 Capture captureNext;
 
-int cap = 0;
-int camswitchinterval = 15; // units = minutes
-boolean canswitchcam = false;
+PixelSort pixelsort;
+PixelComparator comp;
+PImage[] loadedimages;
 
+int camswitchinterval = 15; // units = minutes
 int saveimageinterval = 1;
 int saveimagelastmin = -1;
-
 int sortswitchinterval = 60;
 int sortswitchlastmin = -1;
-
 int compswitchinterval = 30;
 int compswitchlastmin = -1;
-
+int imagesloadinterval = 59;
+int imagesloadlastmin = -1;
 int imagesplayinterval = 60;
-int imagesplaylastmin = -1;
 
+int cap = 0;
 int numpixels, ypixels, xpixels;
-
 int outpixelsize = 6;
 int inpixelsize = 4;
 int pixelsize = 6;
 int pixelstep = 1;
 
 int alpha = 100; // [0-255]
-int count = 0;
-
 int sorttype = 1;
 int comptype = 0;
-
-final int numsorts = 6;
-final int numcomps = 2;
-
-boolean camstarted = false;
 int nullframes = 0;
-
-PixelSort pixelsort;
-PixelComparator comp;
-
-PImage[] loadedimages;
-boolean playimages;
-
+int numsorts = 6;
+int numcomps = 2;
 int imagescount;
 int imagescounter;
 
-void setup()
-{
+boolean canswitchcam = false;
+boolean camstarted = false;
+boolean playimages;
+boolean playingimages;
+
+void setup() {
     frameRate(30);
     noStroke();
     background(0);
 	noCursor();
 
-    // start the cameras
-    try 
-    {
+    try {
         println("Using usb camera . . . ");
         capture = captures[cap];
         capture.start();
-    } 
-    catch (Exception e) 
-    {
+    } catch (Exception e) {
         e.printStackTrace();
         printArray(Capture.list()); 
     }
@@ -85,105 +72,82 @@ void setup()
     pixelsort = new PixelSort(xpixels, ypixels);
 }
 
-ArrayList<Pixel> getPixels(Capture capture)
-{
+ArrayList<Pixel> getPixels(Capture capture) {
     ArrayList<Pixel> pixels = new ArrayList<Pixel>();
     int x, y;
     color c;
-    
-    if (capture.available())
-    {
+    if (capture.available()) {
         nullframes = 0;
         capture.read();
-    
-        for (int j = 0; j < ypixels; j++)
-        {
+        for (int j = 0; j < ypixels; j++) {
             y = (int) (j * inpixelsize);
-            for (int i = 0; i < xpixels; i++)
-            {
+            for (int i = 0; i < xpixels; i++) {
                 x = (int) (i * inpixelsize);
                 c = capture.get(x, y);
                 pixels.add(new Pixel(c));
             }
         }
         return pixels;
-    }
-    else
-    {
+    } else {
         nullframes++;
         return null;
     }
 }
 
-void draw()
-{
+void draw() {
     ArrayList<Pixel> pixels = new ArrayList<Pixel>();
     int m, s;
-    
+
     m = minute();
     s = second();
-    count++;
-
-	// display timer debug
-    // to test local, change time with `date mmddHHMMyy`
-
+	if (m == 0) m = 60; 
+	if (s == 0) s = 60;
+ 
+    // `date mmddHHMMyy.ss`
 	println(nf(m,2) + ":" + nf(s,2));	
 	// println(sorttype % numsorts + "," + comptype % numcomps);
 
 	// live
 
-    if (captures.length > 1 && m % camswitchinterval == 0 && canswitchcam)
-    {
+    if (captures.length > 1 && m % camswitchinterval == 0 && canswitchcam) {
         switchCams();
-    }
-    
-    if (!canswitchcam && (m % camswitchinterval == camswitchinterval - 1) && (s > 40))
-    {
+    }    
+
+    if (!canswitchcam && (m % camswitchinterval == camswitchinterval - 1) && (s > 40)) {
         turnOnNextCam();
     }
-    
-	if (!playimages)
-    	pixels = getPixels(capture);
 
-    if (m % sortswitchinterval == 0 && sortswitchlastmin != m)
-    {
+	if (!playingimages)
+    	pixels = getPixels(capture);
+ 
+	if (m % sortswitchinterval == 0 && sortswitchlastmin != m) {
         sorttype = int(random(0, numsorts));
         sortswitchlastmin = m;
     }
 
-    if (m % compswitchinterval == 0 && compswitchlastmin != m)
-    {
+    if (m % compswitchinterval == 0 && compswitchlastmin != m) {
         // choose random pixelcomp
         comptype = int(random(0, numcomps));
         compswitchlastmin = m;
     }
 
-    if (pixels != null && !playimages)
-    {
+    if (pixels != null && !playingimages) {
         pixels = pixelsort.sort(pixels, comptype, sorttype);
 
         for (int j = 0; j < ypixels; j++) {
             for (int i = 0; i < xpixels; i++) {
                 int index = (j * xpixels + i) % numpixels;
                 color c = pixels.get(index).getColor();
-				
-				// map hsb -> rgb
-                fill(hue(c), saturation(c), brightness(c), alpha); 
-                
+				fill(hue(c), saturation(c), brightness(c), alpha); 
 				rect(i*pixelsize, j*pixelsize, pixelsize, pixelsize);
             }
         }
-    
-        if ((m % saveimageinterval == 0) && (m != saveimagelastmin) && s == 30)
-        {
+        if ((m % saveimageinterval == 0) && (m != saveimagelastmin) && s == 30) {
             saveImage();
             saveimagelastmin = m;		
         }
-
         camstarted = true;
-    }
-    else if (nullframes > 10 && camstarted)
-    {
+    } else if (nullframes > 10 && camstarted) {
 		turnOnNextCam();
         switchCams();
         camstarted = false;
@@ -191,75 +155,59 @@ void draw()
 
 	// playback
 
-    if (m % imagesplayinterval == imagesplayinterval-1 && imagesplaylastmin != m)
-    {
+    if (m % imagesloadinterval == 0 && imagesloadlastmin != m) {
 		loadImages(imagescount, loadedimages);
-        imagesplaylastmin = m;
-    }
-	
-    if (m % imagesplayinterval == 0 || playimages)
-    {
+        imagesloadlastmin = m;
+    }	
+
+    if (m % imagesplayinterval == 0 || playimages) {
 	    if (imagesLoaded(imagescount))
         	playImages(imagescount, loadedimages, 1);
 	}
 }
 
-void turnOnNextCam()
-{
+void turnOnNextCam() {
     boolean flag = true;
-    while (flag)
-    {
+    while (flag) {
         flag = false;
         cap++;
         cap %= captures.length;
         captureNext = captures[cap];
-        // make sure next camera is available
         try {
             captureNext.start();
             canswitchcam = true;
-        }
-        // move on to the next-next
-        catch (Exception e) {
+        } catch (Exception e) {
             flag = true;
         }
     }
 }
 
-void switchCams()
-{
+void switchCams() {
     capture.stop();
     capture = captureNext;
     canswitchcam = false;
 }
 
-void saveImage()
-{
+void saveImage() {
     SimpleDateFormat df;
     Date dateobj;
     String path;
-    
     df = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
     dateobj = new Date();
-    
     path = basepath.concat(df.format(dateobj)).concat(".png");
     saveFrame(path);
     println("Saved to: ".concat(path));
 }
 
-void loadImages(int num, PImage[] stagedimages)
-{
-	// loadedimages[] passed as pointer (no need to return)
-	// https://forum.processing.org/one/topic/listing-last-10-modified-files-in-directory
-
+void loadImages(int num, PImage[] stagedimages) {
 	java.io.File folder = new java.io.File(dataPath(basepath));
  	String[] filenames = folder.list(pngFilter);
-	filenames = reverse(filenames);		// last modified
+	filenames = reverse(filenames);
 
 	int numfiles = min(num, filenames.length);
 	println("Loading " + numfiles + " images . . .");
 
-	for (int i = 0; i < numfiles; i++) 
-	{
+	for (int i = 0; i < numfiles; i++) {
 		stagedimages[i] = requestImage(basepath.concat(filenames[i]));
 	}
 
@@ -267,46 +215,34 @@ void loadImages(int num, PImage[] stagedimages)
 	imagescounter = 0; 	// reset for display
 }
 
-void playImages(int num, PImage[] stagedimages, int loops)
-{
-	if (imagescounter < num * loops)
-	{               
+void playImages(int num, PImage[] stagedimages, int loops) {
+	if (imagescounter < num * loops) {               
 		image(stagedimages[imagescounter % num],0,0);
 		imagescounter++;
 		playimages = true;
-	}
-	else
-	{
+		playingimages = true;
+	} else {
 		playimages = false;
+		playingimages = false;
 	}
 }
 
-boolean imagesLoaded(int num)
-{
-	// there is a fly in this ointment
-
-	for (int i = 0; i < num; i++) 
-	{
-	    if ((loadedimages[i] == null) || (loadedimages[i].width == 0) || (loadedimages[i].width == -1)) 
-		{
-			// println("** Images not loaded. **");
-			// playimages = false;
+boolean imagesLoaded(int num) {
+	for (int i = 0; i < num; i++) {
+	    if ((loadedimages[i] == null) || (loadedimages[i].width == 0) || (loadedimages[i].width == -1)) {
 			return false;
 		}
 	}
 	return true;
 }
 
-final FilenameFilter pngFilter = new FilenameFilter() 
-{
-  	boolean accept(File dir, String name) 
-	{
+final FilenameFilter pngFilter = new FilenameFilter() {
+  	boolean accept(File dir, String name) {
     	return name.toLowerCase().endsWith(".png");
   	}
 };
 
-void setResolution(int thispixelsize)
-{
+void setResolution(int thispixelsize) {
     pixelsize = thispixelsize;
     if (pixelsize == 0)
         pixelsize = 1; 
@@ -318,10 +254,8 @@ void setResolution(int thispixelsize)
     println(ypixels);
 }
 
-void keyPressed()
-{
-    switch(key)
-    {
+void keyPressed() {
+    switch(key) {
         case 'd':
             saveImage();
             break;
