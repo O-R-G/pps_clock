@@ -322,6 +322,7 @@ void setResolution(int thispixelsize) {
     xpixels = width / pixelsize;
     ypixels = height / pixelsize;
     numpixels = xpixels * ypixels;
+    pixelsort = new PixelSort(xpixels, ypixels);
     println(xpixels);
     println(ypixels);
 }
