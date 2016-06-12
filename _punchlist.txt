@@ -3,6 +3,7 @@
 + what happens if no images are loaded or imagesLoaded returns false
 / what happens if one image is corrupt or doesnt load?
 - timing (distinction between interval & absolutes)
+  write this as a case statement? maybe cleaner
 + timing (step thru sorts)
 + timing (play non-adjusted)
 - pixel size (clean up logic for 1280 x 720)

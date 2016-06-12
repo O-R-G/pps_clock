@@ -266,6 +266,9 @@ void setResolution(int thispixelsize) {
 
 void keyPressed() {
     switch(key) {
+        case ' ':
+	        sorttype=10;
+            break;
         case 'd':
             saveImage();
             break;
