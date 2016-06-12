@@ -46,14 +46,17 @@ int numsorts = 6;
 int numcomps = 2;
 int imagescount;
 int imagescounter;
+int lastmin;
+int lastsec;
 
-boolean canswitchcam = false;
-boolean camstarted = false;
 boolean playimages;
 boolean playingimages;
+boolean canswitchcam = false;
+boolean camstarted = false;
+boolean verbose = true;
 
 void setup() {
-    frameRate(30);
+    frameRate(30); // [30]
     noStroke();
     background(0);
 	noCursor();
@@ -76,48 +79,35 @@ void setup() {
 
 void draw() {
     ArrayList<Pixel> pixels = new ArrayList<Pixel>();
-    int m, s;
+    int h, m, s;
 
+    h = hour();
     m = minute();
     s = second();
-	if (m == 0) m = 60; 
+	if (h == 0) h = 24; // avoid 0 % 
+	if (m == 0) m = 60; // avoid 0 % 
 	if (s == 0) s = 60;
 
     // `date mmddHHMMyy.ss`
-	println(nf(m,2) + ":" + nf(s,2));	
-	println(sorttype + "," + comptype);
+	if (verbose && s != lastsec)
+		println(nf(h,2) + ":" + nf(m,2) + ":" + nf(s,2));	
 
 	// scale(0.5);
 
+	// timers
+
+	lastmin = checkMin(m, lastmin);
+
+	// playback
+
+	if (playimages) 
+		if (imagesLoaded(imagescount))
+			playImages(imagescount, loadedimages, 1);
+
 	// live
-
-    if (captures.length > 1 && m % camswitchinterval == 0 && canswitchcam) {
-        switchCams();
-    }    
-
-    if (!canswitchcam && (m % camswitchinterval == camswitchinterval - 1) && (s > 40)) {
-        turnOnNextCam();
-    }
 
 	if (!playingimages)
     	pixels = getPixels(capture);
- 
-	if (m % nosortswitchinterval == 0 && nosortswitchlastmin != m) {
-		sorttype = 10; // out of range
-        nosortswitchlastmin = m;
-    }
-
-	if (m % sortswitchinterval == 0 && sortswitchlastmin != m) {
-		sorttype++;
-		sorttype %= numsorts;
-        sortswitchlastmin = m;
-    }
-
-    if (m % compswitchinterval == 0 && compswitchlastmin != m) {
-		comptype++;
-		comptype %= numcomps;
-        compswitchlastmin = m;
-    }
 
     if (pixels != null && !playingimages) {
         pixels = pixelsort.sort(pixels, comptype, sorttype);
@@ -137,21 +127,78 @@ void draw() {
         camstarted = true;
     } else if (nullframes > 10 && camstarted) {
 		turnOnNextCam();
-        switchCams();
+        switchCam();
         camstarted = false;
     }
 
-	// playback
+	lastsec = s;
+}
 
-    if (m % imagesloadinterval == 0 && imagesloadlastmin != m) {
-		loadImages(imagescount, loadedimages);
-        imagesloadlastmin = m;
-    }	
-
-    if (m % imagesplayinterval == 0 || playimages) {
-	    if (imagesLoaded(imagescount))
-        	playImages(imagescount, loadedimages, 1);
+int checkMin(int thism, int thislastmin) {
+	// minutes
+	if (thism != thislastmin) {
+    	switch (thism) {
+			case 5: 
+				// new sort
+				sorttype++;
+		 		sorttype %= numsorts;
+				if (verbose) println("+ " + thism);
+				thislastmin = thism;
+				break;
+			case 6: 
+			case 7: 
+			case 8: 
+				// new comp
+				comptype++;	
+				comptype %= numcomps;
+				if (verbose) println("+ " + thism);
+				thislastmin = thism;
+				break;
+			case 14: 
+			case 29: 
+			case 44:
+				// next cam
+				turnOnNextCam();
+	            if (verbose) println("** turnOnNextCam() ** " + captures.length);
+				if (verbose) println("+ " + thism);
+				thislastmin = thism;
+				break;
+			case 15: 
+			case 30: 
+			case 45:
+				// switch cam
+				if (canswitchcam)
+					switchCam();
+	            if (verbose) println("** switchCam() **");
+				if (verbose) println("+ " + thism);
+				thislastmin = thism;
+				break;
+			case 59:
+				// loadimages
+				loadImages(imagescount, loadedimages);
+				// next cam
+				turnOnNextCam();
+				if (verbose) println("+ " + thism);
+				thislastmin = thism;
+            	break;
+			case 60:
+				// nosort
+				sorttype = 10; // default no sort
+				// playimages
+			    if (imagesLoaded(imagescount))
+        			playImages(imagescount, loadedimages, 1);
+				// switch cam
+				if (canswitchcam)
+					switchCam();
+				if (verbose) println("+ " + thism);
+				thislastmin = thism;
+            	break;
+        	default:
+				thislastmin = thism - 1;
+				break;
+		}
 	}
+	return thislastmin;
 }
 
 ArrayList<Pixel> getPixels(Capture capture) {
@@ -246,7 +293,7 @@ void turnOnNextCam() {
     }
 }
 
-void switchCams() {
+void switchCam() {
     capture.stop();
     capture = captureNext;
     canswitchcam = false;
@@ -267,7 +314,10 @@ void setResolution(int thispixelsize) {
 void keyPressed() {
     switch(key) {
         case ' ':
-	        sorttype=10;
+			if (sorttype != 10) 
+				sorttype = 10;
+			else 
+ 				sorttype = 0;
             break;
         case 'd':
             saveImage();
@@ -280,11 +330,20 @@ void keyPressed() {
             comptype++;
     	    comptype %= numcomps;
             break;
-        case '+':       // pixelsize++
+        case 'n':
+			turnOnNextCam();
+			if (verbose) println("** turnOnNextCam() ** " + captures.length);
+            break;
+        case 'm':
+			if (captures.length > 1 && canswitchcam)
+				switchCam();
+			if (verbose) println("** switchCam() **");
+            break;
+        case '+':
             setResolution(pixelsize+1);
             println("pixelsize : " + pixelsize);
             break;
-        case '_':       // pixelsize--
+        case '_':
             setResolution(pixelsize-1);
             println("pixelsize : " + pixelsize);
             break;

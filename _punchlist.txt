@@ -2,10 +2,14 @@
 + loadImages logic
 + what happens if no images are loaded or imagesLoaded returns false
 / what happens if one image is corrupt or doesnt load?
-- timing (distinction between interval & absolutes)
-  write this as a case statement? maybe cleaner
 + timing (step thru sorts)
 + timing (play non-adjusted)
+- timing (distinction between interval & absolutes)
+  write this as a case statement? maybe cleaner
+  yes, as a case statement for absolute times in minutes
+  and maybe a separate one for hours
+  use the default: to trigger a flag that says nothing changed
+  then always check to see if something has changed
 - pixel size (clean up logic for 1280 x 720)
 - scale(2)? that might be faster
 - switch camera robustness check
