@@ -68,10 +68,11 @@ void draw() {
     h = hour();
     m = minute();
     s = second();
+	/*
 	if (h == 0) h = 24; // avoid 0 % 
 	if (m == 0) m = 60; 
 	if (s == 0) s = 60;
-
+	*/
 	lasthour = checkHour(h, lasthour);
 	lastmin = checkMin(m, lastmin);
     lastsec = checkSec(s, lastsec);
@@ -101,12 +102,15 @@ void draw() {
             }
         }
         camstarted = true;
-    } else if (nullframes > 10 && camstarted) {
+    } 
+    /*
+    else if (nullframes > 10 && camstarted) {
 		// causing some problems
         camstarted = false;
 		turnOnNextCam();
         switchCam();
     }
+    */
 }
 
 
@@ -115,8 +119,8 @@ void draw() {
 int checkHour(int thish, int thislasthour) {
 	if (thish != thislasthour) {
     	switch (thish) {
+			case 0:
 			case 12:
-			case 24:
 				// new comp
 				comptype++;	
 				comptype %= numcomps;
@@ -134,6 +138,18 @@ int checkHour(int thish, int thislasthour) {
 int checkMin(int thism, int thislastmin) {
 	if (thism != thislastmin) {
     	switch (thism) {
+			case 0:
+				// nosort
+				sorttype = 10; // out of range -> default:
+				// playimages
+			    if (imagesLoaded(imagescount))
+        			playImages(imagescount, loadedimages, 1);
+				// switch cam
+				if (canswitchcam)
+					switchCam();
+				if (verbose) println("+ " + thism);
+				thislastmin = thism;
+            	break;
 			case 5: 
 				// new sort
 				sorttype++;
@@ -171,18 +187,6 @@ int checkMin(int thism, int thislastmin) {
 				if (verbose) println("+ " + thism);
 				thislastmin = thism;
             	break;
-			case 60:
-				// nosort
-				sorttype = 10; // out of range -> default:
-				// playimages
-			    if (imagesLoaded(imagescount))
-        			playImages(imagescount, loadedimages, 1);
-				// switch cam
-				if (canswitchcam)
-					switchCam();
-				if (verbose) println("+ " + thism);
-				thislastmin = thism;
-            	break;
         	default:
 				thislastmin = thism - 1;
 				break;
@@ -194,7 +198,7 @@ int checkMin(int thism, int thislastmin) {
 int checkSec(int thiss, int thislastsec) {
 	if (thiss != thislastsec) {
     	switch (thiss) {
-			case 60: 
+			case 0: 
 				// save image
 				saveImage();
                 if (verbose) println("+ " + thiss);
