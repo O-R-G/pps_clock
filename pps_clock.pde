@@ -144,9 +144,11 @@ int checkMin(int thism, int thislastmin) {
 				// playimages
 			    if (imagesLoaded(imagescount))
         			playImages(imagescount, loadedimages, 1);
-				// switch cam
+                /* 
+   				// switch cam
 				if (canswitchcam)
 					switchCam();
+                */
 				if (verbose) println("+ " + thism);
 				thislastmin = thism;
             	break;
@@ -160,8 +162,10 @@ int checkMin(int thism, int thislastmin) {
 			case 14: 
 			case 29: 
 			case 44:
+                /*
 				// next cam
 				turnOnNextCam();
+                */
 	            if (verbose) println("** turnOnNextCam() ** " + captures.length);
 				if (verbose) println("+ " + thism);
 				thislastmin = thism;
@@ -169,9 +173,11 @@ int checkMin(int thism, int thislastmin) {
 			case 15: 
 			case 30: 
 			case 45:
+                /*   
 				// switch cam
 				if (canswitchcam)
 					switchCam();
+                   */
 	            if (verbose) println("** switchCam() **");
 				if (verbose) println("+ " + thism);
 				thislastmin = thism;
@@ -182,8 +188,10 @@ int checkMin(int thism, int thislastmin) {
 				loadedimages = new PImage[imagescount];
 				loadImages(imagescount, loadedimages);
 				playimages = true;
+                /*
 				// next cam
 				turnOnNextCam();
+                */
 				if (verbose) println("+ " + thism);
 				thislastmin = thism;
             	break;
