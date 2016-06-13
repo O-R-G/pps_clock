@@ -69,7 +69,7 @@ void draw() {
     m = minute();
     s = second();
 	if (h == 0) h = 24; // avoid 0 % 
-	if (m == 0) m = 60; // avoid 0 % 
+	if (m == 0) m = 60; 
 	if (s == 0) s = 60;
 
 	lasthour = checkHour(h, lasthour);
