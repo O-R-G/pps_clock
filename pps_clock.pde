@@ -68,11 +68,7 @@ void draw() {
     h = hour();
     m = minute();
     s = second();
-	/*
-	if (h == 0) h = 24; // avoid 0 % 
-	if (m == 0) m = 60; 
-	if (s == 0) s = 60;
-	*/
+
 	lasthour = checkHour(h, lasthour);
 	lastmin = checkMin(m, lastmin);
     lastsec = checkSec(s, lastsec);
@@ -80,8 +76,6 @@ void draw() {
     // use `date mmddHHMMyy.ss` for dev
 	if (verbose)
 		println(nf(h,2) + ":" + nf(m,2) + ":" + nf(s,2));	
-
-	// scale(0.5);
 
 	if (playimages) 
 		if (imagesLoaded(imagescount))
@@ -102,15 +96,11 @@ void draw() {
             }
         }
         camstarted = true;
-    } 
-    /*
-    else if (nullframes > 10 && camstarted) {
-		// causing some problems
+    } else if (nullframes > 10 && camstarted) {
         camstarted = false;
 		turnOnNextCam();
         switchCam();
     }
-    */
 }
 
 
@@ -142,9 +132,16 @@ int checkMin(int thism, int thislastmin) {
 				// nosort
 				sorttype = 10; // out of range -> default:
 				// playimages
-			    if (imagesLoaded(imagescount))
+			    /*
+                if (imagesLoaded(imagescount))
         			playImages(imagescount, loadedimages, 1);
-                /* 
+                */
+                playimages=true;
+				if (verbose) println("+ " + thism);
+				thislastmin = thism;
+            	break;
+			case 1:
+                /*
    				// switch cam
 				if (canswitchcam)
 					switchCam();
@@ -173,11 +170,11 @@ int checkMin(int thism, int thislastmin) {
 			case 15: 
 			case 30: 
 			case 45:
-                /*   
+                /*
 				// switch cam
 				if (canswitchcam)
 					switchCam();
-                   */
+                */
 	            if (verbose) println("** switchCam() **");
 				if (verbose) println("+ " + thism);
 				thislastmin = thism;
@@ -187,7 +184,7 @@ int checkMin(int thism, int thislastmin) {
 				imagescount = 60;
 				loadedimages = new PImage[imagescount];
 				loadImages(imagescount, loadedimages);
-				playimages = true;
+				// playimages = true;
                 /*
 				// next cam
 				turnOnNextCam();
