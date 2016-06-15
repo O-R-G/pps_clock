@@ -19,5 +19,5 @@ public void settings()
 		println("** No camera found . . . exiting. **");
         exit();
     }
-    size(1920, 1080);
+    size(1280, 720);
 }
