@@ -1,13 +1,13 @@
 + imageplayback logic
 + loadImages logic
 + what happens if no images are loaded or imagesLoaded returns false
-/ what happens if one image is corrupt or doesnt load?
++ lefty/righty restart (crashes when pps_clock is a startup item)
++ lefty/righty universal access settings (mouse)
 + timing (step thru sorts)
 + timing (play non-adjusted)
 + timing (distinction between interval & absolutes)
 + pixel size (clean up logic for 1280 x 720)
-- scale(2)? that might be faster
-/ switch camera robustness check
+x scale(2)? that might be faster
++ switch cameras robustness
+/ what happens if one image is corrupt or doesnt load?
 
-/ lefty/righty restart (crashes when pps_clock is a startup item)
-- lefty/righty universal access settings (mouse)

@@ -34,9 +34,10 @@ int lasth;
 int lastm;
 int lasts;
 
+boolean canswitchcam;
 boolean playimages;
 boolean playingimages;
-boolean canswitchcam;
+boolean sort;
 boolean verbose = true;
 
 void setup() {
@@ -54,8 +55,8 @@ void setup() {
         printArray(Capture.list()); 
     }
 
+    sort = true;
 	loadedimages = new PImage[imagescount];
-
     setResolution(pixelsize);
     pixelsort = new PixelSort(xpixels, ypixels);
 }
@@ -69,12 +70,13 @@ void draw() {
     s = second();
     
    	lasth = checkHour(h, lasth);
-	lastm = checkMin(m, lastm);
-    lasts = checkSec(s, lasts);
+	// lastm = checkMin(m, lastm);
+	lasts = checkMin(s, lasts);
+    // lasts = checkSec(s, lasts);
 
     // use `date mmddHHMMyy.ss` for dev
-	if (verbose)
-		println(nf(h,2) + ":" + nf(m,2) + ":" + nf(s,2));	
+    if (verbose)
+ 		println(nf(h,2) + ":" + nf(m,2) + ":" + nf(s,2));	
 
 	if (playimages) 
 		if (imagesLoaded(imagescount))
@@ -87,7 +89,8 @@ void draw() {
         pixels = makePixels();
 
     if (pixels != null && !playingimages) {
-        pixels = pixelsort.sort(pixels, comptype, sorttype);
+        if (sort)
+            pixels = pixelsort.sort(pixels, comptype, sorttype);
 
         for (int j = 0; j < ypixels; j++) {
             for (int i = 0; i < xpixels; i++) {
@@ -124,32 +127,31 @@ int checkHour(int thish, int thislasth) {
 int checkMin(int thism, int thislastm) {
 	if (thism != thislastm) {
     	switch (thism) {
-			case 0:
-				// nosort
-				sorttype = 10; // out of range -> default:
-				// playimages
+	   		case 0:
+	    		// switch cam
+ 				switchCam();
+		   		// dont sort
+                sort = false;
+		    	// playimages
                 if (imagesLoaded(imagescount))
         			playImages(imagescount, loadedimages, 1);
                 playimages=true;
-   				// switch cam
-   				if (canswitchcam)
-					switchCam();
 				if (verbose) println("+ " + thism);
 				thislastm = thism;
             	break;
 			case 5: 
-				// new sort
+    		    // new sort
+                sort = true;
 				sorttype++;
 		 		sorttype %= numsorts;
 				if (verbose) println("+ " + thism);
 				thislastm = thism;
-				break;
+ 				break;
 			case 14: 
 			case 29: 
 			case 44:
 				// next cam
 				turnOnNextCam();
-	            if (verbose) println("** turnOnNextCam() ** " + captures.length);
 				if (verbose) println("+ " + thism);
 				thislastm = thism;
 				break;
@@ -157,20 +159,17 @@ int checkMin(int thism, int thislastm) {
 			case 30: 
 			case 45:
 				// switch cam
-				if (canswitchcam)
-					switchCam();
-	            if (verbose) println("** switchCam() **");
+				switchCam();
 				if (verbose) println("+ " + thism);
 				thislastm = thism;
 				break;
 			case 59:
+				// next cam
+				turnOnNextCam();
 				// load images
 				imagescount = 60;
 				loadedimages = new PImage[imagescount];
 				loadImages(imagescount, loadedimages);
-				// playimages = true;
-				// next cam
-				turnOnNextCam();
 				if (verbose) println("+ " + thism);
 				thislastm = thism;
             	break;
@@ -231,7 +230,7 @@ ArrayList<Pixel> makePixels() {
         y = (int) (j * pixelsize);
         for (int i = 0; i < xpixels; i++) {
             x = (int) (i * pixelsize);
-            c = color(int(random(100)), int(random(100)), int(random(100)));
+            c = color(int(random(50)), int(random(50)), int(random(50)));
             pixels.add(new Pixel(c));
         }
     }
@@ -239,25 +238,32 @@ ArrayList<Pixel> makePixels() {
 }
 
 void turnOnNextCam() {
-    boolean flag = true;
-    while (flag) {
-        flag = false;
-        cap++;
-        cap %= captures.length;
-        captureNext = captures[cap];
-        try {
-            captureNext.start();
-        } catch (Exception e) {
-            flag = true;
+    if (!canswitchcam && captures.length > 1) {
+        boolean flag = true;
+        while (flag) {
+            flag = false;
+            cap++;
+            cap %= captures.length;
+            captureNext = captures[cap];
+            try {
+                captureNext.start();
+            } catch (Exception e) {
+                if (verbose) println("exception " + e);
+                flag = true;
+            }
         }
+        if (verbose) println("++ turnOnNextCam() --> " + cap);
+        canswitchcam = true;
     }
-    canswitchcam = true;
 }
 
 void switchCam() {
-    capture.stop();
-    capture = captureNext;
-    canswitchcam = false;
+    if (canswitchcam) {
+        capture.stop();
+        capture = captureNext;
+        if (verbose) println("++ switchCam() --> " + capture);
+        canswitchcam = false;
+    }
 }
 
 
@@ -280,7 +286,8 @@ void loadImages(int num, PImage[] stagedimages) {
 	filenames = reverse(filenames);
 
 	int numfiles = min(num, filenames.length);
-	println("Loading " + numfiles + " images . . .");
+	if (verbose)
+        println("Loading " + numfiles + " images . . .");
 
 	for (int i = 0; i < numfiles; i++) {
 		stagedimages[i] = requestImage(basepath.concat(filenames[i]));
@@ -326,19 +333,15 @@ void setResolution(int thispixelsize) {
         pixelsize = 1; 
     xpixels = width / pixelsize;
     ypixels = height / pixelsize;
-    numpixels = xpixels * ypixels;
+    numpixels = xpixels * ypixels;    
     pixelsort = new PixelSort(xpixels, ypixels);
-    println(xpixels);
-    println(ypixels);
+    println(xpixels + " x " + ypixels);
 }
 
 void keyPressed() {
     switch(key) {
         case ' ':
-			if (sorttype != 10) 
-				sorttype = 10;
-			else 
- 				sorttype = 0;
+            sort = !sort;
             break;
         case 'd':
             saveImage();
@@ -353,12 +356,9 @@ void keyPressed() {
             break;
         case 'n':
 			turnOnNextCam();
-			if (verbose) println("** turnOnNextCam() ** " + captures.length);
             break;
         case 'm':
-			if (captures.length > 1 && canswitchcam)
-				switchCam();
-			if (verbose) println("** switchCam() **");
+			switchCam();
             break;
         case '+':
             setResolution(pixelsize+1);
