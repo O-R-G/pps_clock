@@ -9,5 +9,5 @@
 + pixel size (clean up logic for 1280 x 720)
 x scale(2)? that might be faster
 + switch cameras robustness
-/ what happens if one image is corrupt or doesnt load?
++ what happens if one image is corrupt or doesnt load?
 

@@ -28,7 +28,8 @@ int comptype;
 int nullframes;
 int numsorts = 6;
 int numcomps = 2;
-int imagescount = 60; // #/hr
+int imagesmax = 60; // #/hr
+int imagescount;
 int imagescounter;
 int lasth;
 int lastm;
@@ -56,6 +57,7 @@ void setup() {
     }
 
     sort = true;
+    imagescount = imagesmax;
 	loadedimages = new PImage[imagescount];
     setResolution(pixelsize);
     pixelsort = new PixelSort(xpixels, ypixels);
@@ -69,12 +71,14 @@ void draw() {
     m = minute();
     s = second();
     
-   	lasth = checkHour(h, lasth);
+   	// lasth = checkHour(h, lasth);
 	// lastm = checkMin(m, lastm);
-	lasts = checkMin(s, lasts);
     // lasts = checkSec(s, lasts);
+    lasts = checkMin(s, lasts);
 
-    // use `date mmddHHMMyy.ss` for dev
+    // use `date mmddHHMMyy.ss`
+    // set 1" = 1' --> lasts = checkMin(s,lasts);
+
     if (verbose)
  		println(nf(h,2) + ":" + nf(m,2) + ":" + nf(s,2));	
 
@@ -133,8 +137,6 @@ int checkMin(int thism, int thislastm) {
 		   		// dont sort
                 sort = false;
 		    	// playimages
-                if (imagesLoaded(imagescount))
-        			playImages(imagescount, loadedimages, 1);
                 playimages=true;
 				if (verbose) println("+ " + thism);
 				thislastm = thism;
@@ -167,9 +169,8 @@ int checkMin(int thism, int thislastm) {
 				// next cam
 				turnOnNextCam();
 				// load images
-				imagescount = 60;
-				loadedimages = new PImage[imagescount];
-				loadImages(imagescount, loadedimages);
+				loadedimages = new PImage[imagesmax];
+				loadImages(imagesmax, loadedimages);
 				if (verbose) println("+ " + thism);
 				thislastm = thism;
             	break;
@@ -311,9 +312,13 @@ void playImages(int num, PImage[] stagedimages, int loops) {
 
 boolean imagesLoaded(int num) {
 	for (int i = 0; i < num; i++) {
-	    if ((loadedimages[i] == null) || (loadedimages[i].width == 0) || (loadedimages[i].width == -1)) {
+	    if (loadedimages[i].width == -1) {
+            if (verbose) println("++ error reading image " + i);
+            imagescount = i;
+            return true;
+        }
+	    if ((loadedimages[i] == null) || (loadedimages[i].width == 0)) 
 			return false;
-		}
 	}
 	return true;
 }
@@ -377,9 +382,8 @@ void keyPressed() {
             println("alpha : " + alpha);
             break;
         case 'i':
-			imagescount = 60;
-			loadedimages = new PImage[imagescount];
-	    	loadImages(imagescount, loadedimages);
+			loadedimages = new PImage[imagesmax];
+	    	loadImages(imagesmax, loadedimages);
 			playimages = true;
             break;
         case 'o':
