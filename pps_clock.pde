@@ -73,7 +73,7 @@ void draw() {
     
    	// lasth = checkHour(h, lasth);
 	// lastm = checkMin(m, lastm);
-    // lasts = checkSec(s, lasts);
+    lasts = checkSec(s, lasts);
     lasts = checkMin(s, lasts);
 
     // use `date mmddHHMMyy.ss`
@@ -184,7 +184,7 @@ int checkMin(int thism, int thislastm) {
 int checkSec(int thiss, int thislasts) {
 	if (thiss != thislasts) {
     	switch (thiss) {
-			case 0: 
+			case 30: 
 				// save image
 				saveImage();
                 if (verbose) println("+ " + thiss);
