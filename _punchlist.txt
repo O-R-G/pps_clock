@@ -10,4 +10,5 @@
 x scale(2)? that might be faster
 + switch cameras robustness
 + what happens if one image is corrupt or doesnt load?
-
+- absolute timings (tied to the clock) for sort styles
+  so that it doesnt matter when the software starts
