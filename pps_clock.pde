@@ -518,22 +518,34 @@ void keyPressed() {
 public Capture[] getCaptures()
 {
     String[] rawList = Capture.list();
+    
+    // using an ArrayList here because we don't know how
+    // long the list of captures is going to be 
     ArrayList<String> goodList = new ArrayList<String>();
     Capture[] captureArr;
-    
     String lastCam = "";
     
     for (int i = 0; i < rawList.length; i++)
     {
+        // split the capture name into its constituent parts,
+        // e.g.: 
+        // "name=HD USB Camera,size=1296x972,fps=30"
+        // becomes
+        // ["name=HD USB Camera", "size=1296x972", "fps=30"
         String[] split = rawList[i].split(",");
+        
+        // if the camera is different than the last one you stored,
+        // *and* its resolution is correct, add it to the list
         if (!lastCam.equals(split[0]) && split[1].equals(sizePref))
         {
             goodList.add(rawList[i]);
+            
+            // remember the last camera you stored
             lastCam = split[0];
         }
     }
     
-    // convert to array of Strings
+    // convert array list of Strings to array of captures
     captureArr = new Capture[goodList.size()];
     for (int i = 0; i < goodList.size(); i++)
     {
