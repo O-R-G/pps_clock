@@ -502,3 +502,31 @@ void keyPressed() {
             break;
     }
 }
+
+public Capture[] getCaptures()
+{
+    String[] rawList = Capture.list();
+    ArrayList<String> goodList = new ArrayList<String>();
+    Capture[] captureArr;
+    
+    String lastCam = "";
+    
+    for (int i = 0; i < rawList.length; i++)
+    {
+        String[] split = rawList[i].split(",");
+        if (!lastCam.equals(split[0]) && split[1].equals(sizePref))
+        {
+            goodList.add(rawList[i]);
+            lastCam = split[0];
+        }
+    }
+    
+    // convert to array of Strings
+    captureArr = new Capture[goodList.size()];
+    for (int i = 0; i < goodList.size(); i++)
+    {
+        captureArr[i] = new Capture(this, goodList.get(i));
+    }
+    
+    return captureArr;
+}
