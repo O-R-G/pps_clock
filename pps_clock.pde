@@ -43,6 +43,7 @@ boolean playingimages;
 boolean sort;
 
 boolean histogram = true;
+boolean adjustcolors = false;
 
 boolean debug = true;
 boolean verbose = true;
@@ -102,17 +103,15 @@ void draw() {
 	if (!playingimages) 
     	pixels = getPixels(capture);
 
-    // ** todo **
-    // adjust color values using sin(x/512-1)
-    // send the value to that function and return new
-    // which shifts mid-range values more than the ends
-
     if (nullframes > 30)
         pixels = makePixels();
 
     if (pixels != null && !playingimages) {
         if (histogram)
-            displayHistogram(pixels, 5);
+            displayHistogram(pixels, 2, 100, 100);
+
+        if (adjustcolors)
+            adjustColorsEnvelope(pixels);
 
         if (sort)
             pixels = pixelsort.sort(pixels, comptype, sorttype);
@@ -121,7 +120,7 @@ void draw() {
             for (int i = 0; i < xpixels; i++) {
                 int index = (j * xpixels + i) % numpixels;
                 color c = pixels.get(index).getColor();
-				fill(hue(c), saturation(c), brightness(c), alpha); 
+    	        fill(hue(c), saturation(c), brightness(c), alpha); 
 				rect(i*pixelsize, j*pixelsize, pixelsize, pixelsize);
             }
         }
@@ -399,35 +398,55 @@ void setResolution(int thispixelsize) {
     println(xpixels + " x " + ypixels);
 }
 
-void displayHistogram(ArrayList<Pixel> thispixels, int resolution) {
-
-    // thispixels passed as pointer
-
+void displayHistogram(ArrayList<Pixel> thispixels, int resolution, int xpos, int ypos) {
     int[] histogram = new int[256];
-
     for (int i = 0; i < thispixels.size(); i++) {
         color c = thispixels.get(i).getColor();
         int b = int(brightness(c));
         histogram[b]++;
-        if (debug && verbose) 
-            println(b);
     }
-
     int histogramMax = max(histogram);
-
     stroke(255);
     for (int i = 0; i < xpixels; i += resolution) {
         int which = int(map(i, 0, xpixels, 0, 255));
         int y = int(map(histogram[which], 0, histogramMax, ypixels, 0));
-        line(i, ypixels, i, y);
+        line(xpos + i, ypos + ypixels, xpos + i, ypos + y);
     }
     noStroke();
 }
+
+
+
+
+void adjustColorsEnvelope(ArrayList<Pixel> thispixels) {
+
+    // adjust colors envelope
+    // adjust color values using sin(x/512-1)
+    // send the value to that function and return new
+    // which shifts mid-range values more than the ends
+
+    int[] histogram = new int[256];
+    for (int i = 0; i < thispixels.size(); i++) {
+        // color c = thispixels.get(i).getColor();
+        color c = color(100,100,100);
+        thispixels.get(i).setColor(c);
+        // int b = int(brightness(c));
+        // histogram[b]++;
+    }
+}
+
+
+
+
+
 
 void keyPressed() {
     switch(key) {
         case ' ':
             sort = !sort;
+            break;
+        case 'a':
+            adjustcolors = !adjustcolors;
             break;
         case 'r':
             rgb = !rgb;

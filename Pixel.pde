@@ -10,6 +10,10 @@ public class Pixel implements Comparable<Pixel> {
     public color getColor() {
         return c;
     }
+
+    public void setColor(color newc) {
+        this.c = newc;
+    }
     
     // basic compareTo 
     public int compareTo(Pixel other) {
