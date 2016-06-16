@@ -42,7 +42,7 @@ boolean playimages;
 boolean playingimages;
 boolean sort;
 
-boolean histogram = true;
+boolean histogram = false;
 boolean adjustcolors = false;
 
 boolean debug = true;
