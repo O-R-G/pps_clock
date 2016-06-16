@@ -34,12 +34,15 @@ int imagescounter;
 int lasth;
 int lastm;
 int lasts;
+int lastsdebug;
 
 boolean canswitchcam;
 boolean playimages;
 boolean playingimages;
 boolean sort;
 boolean verbose = true;
+boolean dontsort = true;
+boolean debug = true;
 
 void setup() {
     frameRate(30); // [30]
@@ -73,14 +76,23 @@ void draw() {
     
    	// lasth = checkHour(h, lasth);
 	// lastm = checkMin(m, lastm);
-    lasts = checkSec(s, lasts);
-    lasts = checkMin(s, lasts);
+    // lasts = checkSec(s, lasts);
 
     // use `date mmddHHMMyy.ss`
     // set 1" = 1' --> lasts = checkMin(s,lasts);
+    // set 1' = 1 hr --> lastm = checkHour(m,lastm);
 
-    if (verbose)
+   	lastm = checkHour(m % 12, lastm);
+    lasts = checkMin(s, lasts);
+
+    if (verbose && s != lastsdebug) {
  		println(nf(h,2) + ":" + nf(m,2) + ":" + nf(s,2));	
+ 		println(cap + " -- " + sorttype + "," + comptype);
+ 		println("(" + capture + ")");
+    }
+
+    if (dontsort) 
+        sort = false;
 
 	if (playimages) 
 		if (imagesLoaded(imagescount))
@@ -105,6 +117,8 @@ void draw() {
             }
         }
     }
+    if (debug)    
+        lastsdebug = s;
 }
 
 
@@ -114,11 +128,54 @@ int checkHour(int thish, int thislasth) {
 	if (thish != thislasth) {
     	switch (thish) {
 			case 0:
+				sorttype = 0;
+				comptype = 0;	
+                thislasth = thish;
+				break;
 			case 12:
-				// new comp
-				comptype++;	
-				comptype %= numcomps;
-                if (verbose) println("+ " + thish);
+				sorttype = 0;
+				comptype = 1;	
+                thislasth = thish;
+				break;
+			case 6:
+			case 18:
+				sorttype = 0;
+				comptype = 0;	
+                thislasth = thish;
+				break;
+			case 1:
+			case 7:
+			case 13:
+			case 19:
+				sorttype = 1;
+                thislasth = thish;
+				break;
+			case 2:
+			case 8:
+			case 14:
+			case 20:
+				sorttype = 2;
+                thislasth = thish;
+				break;
+			case 3:
+			case 9:
+			case 15:
+			case 21:
+				sorttype = 3;
+                thislasth = thish;
+				break;
+			case 4:
+			case 10:
+			case 16:
+			case 22:
+				sorttype = 4;
+                thislasth = thish;
+				break;
+			case 5:
+			case 11:
+			case 17:
+			case 23:
+				sorttype = 5;
                 thislasth = thish;
 				break;
         	default:
@@ -132,27 +189,20 @@ int checkMin(int thism, int thislastm) {
 	if (thism != thislastm) {
     	switch (thism) {
 	   		case 0:
-	    		// switch cam
  				switchCam();
-		   		// dont sort
                 sort = false;
-		    	// playimages
                 playimages=true;
 				if (verbose) println("+ " + thism);
 				thislastm = thism;
             	break;
 			case 5: 
-    		    // new sort
                 sort = true;
-				sorttype++;
-		 		sorttype %= numsorts;
 				if (verbose) println("+ " + thism);
 				thislastm = thism;
  				break;
 			case 14: 
 			case 29: 
 			case 44:
-				// next cam
 				turnOnNextCam();
 				if (verbose) println("+ " + thism);
 				thislastm = thism;
@@ -160,15 +210,12 @@ int checkMin(int thism, int thislastm) {
 			case 15: 
 			case 30: 
 			case 45:
-				// switch cam
 				switchCam();
 				if (verbose) println("+ " + thism);
 				thislastm = thism;
 				break;
 			case 59:
-				// next cam
 				turnOnNextCam();
-				// load images
 				loadedimages = new PImage[imagesmax];
 				loadImages(imagesmax, loadedimages);
 				if (verbose) println("+ " + thism);
