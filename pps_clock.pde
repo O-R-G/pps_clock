@@ -43,7 +43,7 @@ boolean playingimages;
 boolean sort;
 
 boolean histogram = true;
-boolean adjustcolors = true;
+boolean adjustcolors = false;
 
 boolean debug = true;
 boolean verbose = true;
@@ -110,7 +110,7 @@ void draw() {
         if (histogram)
             displayHistogram(pixels, 2, 100, 100);
         if (adjustcolors)
-            adjustColorsEnvelope(pixels, random(255)*.01);
+            adjustColorsEnvelope(pixels, 10);
         if (sort)
             pixels = pixelsort.sort(pixels, comptype, sorttype);
         for (int j = 0; j < ypixels; j++) {
@@ -417,23 +417,26 @@ void displayHistogram(ArrayList<Pixel> thispixels, int resolution, int xpos, int
 
 void adjustColorsEnvelope(ArrayList<Pixel> thispixels, float stubx) {
 
-    // adjust colors envelope
-    // adjust color values using sin(x/512-1)
-    // send the value to that function and return new
-    // which shifts mid-range values more than the ends
-
     // gaussian distribution function
     // https://en.wikipedia.org/wiki/Gaussian_function
+    // worked out using Grapher
 
-    float a = 1/TWO_PI; // ?
-    float b = 1;        //
-    float c = 1;        // 
-    float e = 1;        // 
- 
-    float x = random(100000);
+    final float e = 2.7182818284590452353602875;
 
-    float gaussian = a * pow(e,-(pow(x-b,2) / 2 * pow(c,2)));
-    println("=== " + gaussian);
+    float b = 255/2;        // expected value (center of curve)
+    float c = 25.0;         // sqrt of variance
+    float a = 1/(c * sqrt(TWO_PI));      // 
+
+    float x = random(255);
+
+    // float gaussian = a * pow(e,-(pow((x-b),2) / 2 * pow(c,2)));
+    float gaussian = a * pow(e,(-pow((x-b),2) / 2 * pow(c,2)));
+    // float gaussian = a * pow(e,x/10);
+    gaussian *= 100;    
+    println("--------------");
+    println("x = " + x);
+    println("a = " + a);
+    println("g = " + gaussian);
 
 /*
     int[] histogram = new int[256];
