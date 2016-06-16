@@ -6,14 +6,21 @@ public void settings()
 {
     try
     {        
-        // get captures dynamically
-        captures = getCaptures();
+        // make sure the size of captures is correct!
+        captures = new Capture[4];
+        captures[0] = new Capture(this, "name=HD USB Camera,size=1296x972,fps=30");
+        captures[1] = new Capture(this, "name=HD USB Camera #2,size=1296x972,fps=30");
+        captures[2] = new Capture(this, "name=HD USB Camera #3,size=1296x972,fps=30");
+        captures[3] = new Capture(this, "name=HD USB Camera #4,size=1296x972,fps=30");
+
+        // or get captures dynamically
+        // captures = getCaptures();
     }
     catch (Exception e)
     {
         e.printStackTrace();
         printArray(Capture.list());
-        println("** No camera found . . . exiting. **");
+		println("** No camera found . . . exiting. **");
         exit();
     }
     size(1280, 720);

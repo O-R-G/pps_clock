@@ -296,7 +296,9 @@ void turnOnNextCam(int whichcam) {
         boolean flag = true;
         while (flag) {
             flag = false;
+            println(whichcam);
             whichcam %= captures.length;
+            println(whichcam);
             captureNext = captures[whichcam];
             try {
                 captureNext.start();
@@ -307,6 +309,7 @@ void turnOnNextCam(int whichcam) {
             }
         }
         if (verbose) println("++ turnOnNextCam() --> " + whichcam);
+        println(whichcam);
         cap = whichcam;
         canswitchcam = true;
     }
