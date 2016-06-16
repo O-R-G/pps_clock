@@ -412,14 +412,12 @@ void displayHistogram(ArrayList<Pixel> thispixels, int resolution, int xpos, int
     noStroke();
 }
 
-
-
-
 void adjustColorsEnvelope(ArrayList<Pixel> thispixels, float stubx) {
 
     // gaussian distribution function
     // https://en.wikipedia.org/wiki/Gaussian_function
     // worked out using Grapher
+    // ** in process **
 
     final float e = 2.7182818284590452353602875;
 
@@ -449,11 +447,6 @@ void adjustColorsEnvelope(ArrayList<Pixel> thispixels, float stubx) {
     }
 */
 }
-
-
-
-
-
 
 void keyPressed() {
     switch(key) {
