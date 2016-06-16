@@ -36,13 +36,16 @@ int lastm;
 int lasts;
 int lastsdebug;
 
+boolean rgb;
 boolean canswitchcam;
 boolean playimages;
 boolean playingimages;
 boolean sort;
-boolean verbose = true;
-boolean dontsort = true;
+
+boolean histogram = true;
+
 boolean debug = true;
+boolean verbose = true;
 
 void setup() {
     frameRate(30); // [30]
@@ -85,14 +88,12 @@ void draw() {
    	lastm = checkHour(m % 12, lastm);
     lasts = checkMin(s, lasts);
 
-    if (verbose && s != lastsdebug) {
- 		println(nf(h,2) + ":" + nf(m,2) + ":" + nf(s,2));	
- 		println(cap + " -- " + sorttype + "," + comptype);
- 		println("(" + capture + ")");
+    if (debug && s != lastsdebug && verbose) {
+        println(nf(h,2) + ":" + nf(m,2) + ":" + nf(s,2));	
+        println("> " + nf(m % 12,2) + ":" + nf(s,2));
+        println("(" + cap + ") " + sorttype + "," + comptype);
+        // println("(" + capture + ")");
     }
-
-    if (dontsort) 
-        sort = false;
 
 	if (playimages) 
 		if (imagesLoaded(imagescount))
@@ -101,10 +102,18 @@ void draw() {
 	if (!playingimages) 
     	pixels = getPixels(capture);
 
+    // ** todo **
+    // adjust color values using sin(x/512-1)
+    // send the value to that function and return new
+    // which shifts mid-range values more than the ends
+
     if (nullframes > 30)
         pixels = makePixels();
 
     if (pixels != null && !playingimages) {
+        if (histogram)
+            displayHistogram(pixels);
+
         if (sort)
             pixels = pixelsort.sort(pixels, comptype, sorttype);
 
@@ -390,10 +399,42 @@ void setResolution(int thispixelsize) {
     println(xpixels + " x " + ypixels);
 }
 
+void displayHistogram(ArrayList<Pixel> thispixels) {
+
+    // thispixels passed as pointer
+
+    int[] histogram = new int[256];
+
+    for (int i = 0; i < thispixels.size(); i++) {
+        color c = thispixels.get(i).getColor();
+        int b = int(brightness(c));
+        histogram[b]++;
+        if (debug && verbose) 
+            println(b);
+    }
+
+    int histogramMax = max(histogram);
+
+    stroke(255);
+    for (int i = 0; i < xpixels; i += 10) {
+        int which = int(map(i, 0, xpixels, 0, 255));
+        int y = int(map(histogram[which], 0, histogramMax, ypixels, 0));
+        line(i, ypixels, i, y);
+    }
+    noStroke();
+}
+
 void keyPressed() {
     switch(key) {
         case ' ':
             sort = !sort;
+            break;
+        case 'r':
+            rgb = !rgb;
+            if (rgb) 
+                colorMode(RGB);
+            else 
+                colorMode(HSB);
             break;
         case 'd':
             saveImage();
