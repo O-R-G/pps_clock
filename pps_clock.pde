@@ -43,7 +43,7 @@ boolean playingimages;
 boolean sort;
 
 boolean histogram = true;
-boolean adjustcolors = false;
+boolean adjustcolors = true;
 
 boolean debug = true;
 boolean verbose = true;
@@ -109,13 +109,10 @@ void draw() {
     if (pixels != null && !playingimages) {
         if (histogram)
             displayHistogram(pixels, 2, 100, 100);
-
         if (adjustcolors)
-            adjustColorsEnvelope(pixels);
-
+            adjustColorsEnvelope(pixels, random(255)*.01);
         if (sort)
             pixels = pixelsort.sort(pixels, comptype, sorttype);
-
         for (int j = 0; j < ypixels; j++) {
             for (int i = 0; i < xpixels; i++) {
                 int index = (j * xpixels + i) % numpixels;
@@ -418,13 +415,27 @@ void displayHistogram(ArrayList<Pixel> thispixels, int resolution, int xpos, int
 
 
 
-void adjustColorsEnvelope(ArrayList<Pixel> thispixels) {
+void adjustColorsEnvelope(ArrayList<Pixel> thispixels, float stubx) {
 
     // adjust colors envelope
     // adjust color values using sin(x/512-1)
     // send the value to that function and return new
     // which shifts mid-range values more than the ends
 
+    // gaussian distribution function
+    // https://en.wikipedia.org/wiki/Gaussian_function
+
+    float a = 1/TWO_PI; // ?
+    float b = 1;        //
+    float c = 1;        // 
+    float e = 1;        // 
+ 
+    float x = random(100000);
+
+    float gaussian = a * pow(e,-(pow(x-b,2) / 2 * pow(c,2)));
+    println("=== " + gaussian);
+
+/*
     int[] histogram = new int[256];
     for (int i = 0; i < thispixels.size(); i++) {
         // color c = thispixels.get(i).getColor();
@@ -433,6 +444,7 @@ void adjustColorsEnvelope(ArrayList<Pixel> thispixels) {
         // int b = int(brightness(c));
         // histogram[b]++;
     }
+*/
 }
 
 
