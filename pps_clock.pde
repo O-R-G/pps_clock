@@ -18,9 +18,10 @@ PixelSort pixelsort;
 PixelComparator comp;
 PImage[] loadedimages;
 
-int cap;
 int numpixels, ypixels, xpixels;
 int pixelsize = 4;
+int whichcam;
+int cap;
 
 int alpha = 100; // [0-255]
 int sorttype;
@@ -93,7 +94,6 @@ void draw() {
         println(nf(h,2) + ":" + nf(m,2) + ":" + nf(s,2));	
         println("> " + nf(m % 12,2) + ":" + nf(s,2));
         println("(" + cap + ") " + sorttype + "," + comptype);
-        // println("(" + capture + ")");
     }
 
 	if (playimages) 
@@ -197,33 +197,34 @@ int checkMin(int thism, int thislastm) {
  				switchCam();
                 sort = false;
                 playimages=true;
-				if (verbose) println("+ " + thism);
 				thislastm = thism;
             	break;
 			case 5: 
                 sort = true;
-				if (verbose) println("+ " + thism);
 				thislastm = thism;
  				break;
 			case 14: 
+				turnOnNextCam(1);
+				thislastm = thism;
+				break;
 			case 29: 
+				turnOnNextCam(2);
+				thislastm = thism;
+				break;
 			case 44:
-				turnOnNextCam();
-				if (verbose) println("+ " + thism);
+				turnOnNextCam(3);
 				thislastm = thism;
 				break;
 			case 15: 
 			case 30: 
 			case 45:
 				switchCam();
-				if (verbose) println("+ " + thism);
 				thislastm = thism;
 				break;
 			case 59:
-				turnOnNextCam();
+				turnOnNextCam(0);
 				loadedimages = new PImage[imagesmax];
 				loadImages(imagesmax, loadedimages);
-				if (verbose) println("+ " + thism);
 				thislastm = thism;
             	break;
             default:
@@ -290,22 +291,23 @@ ArrayList<Pixel> makePixels() {
     return pixels;
 }
 
-void turnOnNextCam() {
+void turnOnNextCam(int whichcam) {
     if (!canswitchcam && captures.length > 1) {
         boolean flag = true;
         while (flag) {
             flag = false;
-            cap++;
-            cap %= captures.length;
-            captureNext = captures[cap];
+            whichcam %= captures.length;
+            captureNext = captures[whichcam];
             try {
                 captureNext.start();
             } catch (Exception e) {
                 if (verbose) println("exception " + e);
+                whichcam++;
                 flag = true;
             }
         }
-        if (verbose) println("++ turnOnNextCam() --> " + cap);
+        if (verbose) println("++ turnOnNextCam() --> " + whichcam);
+        cap = whichcam;
         canswitchcam = true;
     }
 }
@@ -435,8 +437,7 @@ void adjustColorsEnvelope(ArrayList<Pixel> thispixels, float stubx) {
     println("x = " + x);
     println("a = " + a);
     println("g = " + gaussian);
-
-/*
+    /*
     int[] histogram = new int[256];
     for (int i = 0; i < thispixels.size(); i++) {
         // color c = thispixels.get(i).getColor();
@@ -445,7 +446,7 @@ void adjustColorsEnvelope(ArrayList<Pixel> thispixels, float stubx) {
         // int b = int(brightness(c));
         // histogram[b]++;
     }
-*/
+    */
 }
 
 void keyPressed() {
@@ -475,7 +476,7 @@ void keyPressed() {
     	    comptype %= numcomps;
             break;
         case 'n':
-			turnOnNextCam();
+			turnOnNextCam(cap+1);
             break;
         case 'm':
 			switchCam();
