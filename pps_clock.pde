@@ -112,7 +112,7 @@ void draw() {
 
     if (pixels != null && !playingimages) {
         if (histogram)
-            displayHistogram(pixels);
+            displayHistogram(pixels, 5);
 
         if (sort)
             pixels = pixelsort.sort(pixels, comptype, sorttype);
@@ -399,7 +399,7 @@ void setResolution(int thispixelsize) {
     println(xpixels + " x " + ypixels);
 }
 
-void displayHistogram(ArrayList<Pixel> thispixels) {
+void displayHistogram(ArrayList<Pixel> thispixels, int resolution) {
 
     // thispixels passed as pointer
 
@@ -416,7 +416,7 @@ void displayHistogram(ArrayList<Pixel> thispixels) {
     int histogramMax = max(histogram);
 
     stroke(255);
-    for (int i = 0; i < xpixels; i += 10) {
+    for (int i = 0; i < xpixels; i += resolution) {
         int which = int(map(i, 0, xpixels, 0, 255));
         int y = int(map(histogram[which], 0, histogramMax, ypixels, 0));
         line(i, ypixels, i, y);
