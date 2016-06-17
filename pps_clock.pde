@@ -46,8 +46,8 @@ boolean sort;
 boolean histogram = false;
 boolean adjustcolors = false;
 
-boolean debug = true;
-boolean verbose = true;
+boolean debug = false;
+boolean verbose = false;
 
 void setup() {
     frameRate(30); // [30]

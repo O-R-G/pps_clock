@@ -16,5 +16,4 @@ x bitshift colors?
 + absolute timings for cameras
 + turn on realtime pacing
 + on startup, switch to correct cam
-- export lefty / righty
-/
++ export lefty / righty
