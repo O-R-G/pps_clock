@@ -82,14 +82,14 @@ void draw() {
     s = second();
     
    	lasth = checkHour(h, lasth);
-	// lastm = checkMin(m, lastm);
-    // lasts = checkSec(s, lasts);
+	lastm = checkMin(m, lastm);
+    lasts = checkSec(s, lasts);
 
     // use `date mmddHHMMyy.ss` for debug or
     // set 1" = 1' --> lasts = checkMin(s,lasts);
     // set 1' = 1 hr --> lastm = checkHour(m,lastm);
-   	lastm = checkHour(m % 12, lastm);
-    lasts = checkMin(s, lasts);
+   	// lastm = checkHour(m % 12, lastm);
+    // lasts = checkMin(s, lasts);
 
     if (debug && s != lastsdebug && verbose) {
         println(nf(h,2) + ":" + nf(m,2) + ":" + nf(s,2));	
