@@ -43,29 +43,21 @@ boolean playimages;
 boolean playingimages;
 boolean sort;
 
-boolean histogram = false;
+boolean displayhistogram = false;
 boolean adjustcolors = false;
 
-boolean debug = false;
-boolean verbose = false;
+boolean debug = true;
+boolean verbose = true;
 
 void setup() {
     frameRate(30); // [30]
     noStroke();
     background(0);
 	noCursor();
-       
+
     cap = int(minute() / 15) % captures.length;
-    try {
-        println("Using usb camera . . . ");
-        capture = captures[cap];
-        capture.start();
-    } catch (Exception e) {                
-        e.printStackTrace();
-        if (verbose) println("** exception loading camera " + cap);
-        printArray(Capture.list()); 
-    }
- 
+    turnOnCam(cap);
+
     sort = true;
     imagescount = imagesmax;
 	loadedimages = new PImage[imagescount];
@@ -108,7 +100,7 @@ void draw() {
         pixels = makePixels();
 
     if (pixels != null && !playingimages) {
-        if (histogram)
+        if (displayhistogram)
             displayHistogram(pixels, 2, 100, 100);
         if (adjustcolors)
             adjustColorsEnvelope(pixels, 10);
@@ -313,6 +305,35 @@ void turnOnNextCam(int whichcam) {
     }
 }
 
+void turnOnCam(int whichcam) {
+    if (!canswitchcam) {
+        int count = 0;
+        boolean flag = true;
+        while (flag) {
+            flag = false;
+            whichcam %= captures.length;
+            capture = captures[whichcam];
+            if (verbose) println("Trying camera " + whichcam);
+            try {
+                capture.start();
+            } catch (Exception e) {
+                if (verbose) println("exception " + e);
+                if (count > captures.length) {
+                    e.printStackTrace();
+                    printArray(Capture.list()); 
+                    println("** No camera available, exiting . . . **");
+                    exit();
+                }
+                count++;
+                whichcam++;
+                flag = true;
+            }
+        }
+        if (verbose) println("Success. Using camera " + whichcam);
+        cap = whichcam;
+    }
+}
+
 void switchCam() {
     if (canswitchcam) {
         capture.stop();
@@ -457,6 +478,9 @@ void keyPressed() {
             break;
         case 'a':
             adjustcolors = !adjustcolors;
+            break;
+        case 'h':
+            displayhistogram = !displayhistogram;
             break;
         case 'r':
             rgb = !rgb;
