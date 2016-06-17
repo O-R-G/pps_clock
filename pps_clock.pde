@@ -54,16 +54,18 @@ void setup() {
     noStroke();
     background(0);
 	noCursor();
-
+       
+    cap = int(minute() / 15) % captures.length;
     try {
         println("Using usb camera . . . ");
         capture = captures[cap];
         capture.start();
-    } catch (Exception e) {
+    } catch (Exception e) {                
         e.printStackTrace();
+        if (verbose) println("** exception loading camera " + cap);
         printArray(Capture.list()); 
     }
-
+ 
     sort = true;
     imagescount = imagesmax;
 	loadedimages = new PImage[imagescount];
@@ -79,14 +81,13 @@ void draw() {
     m = minute();
     s = second();
     
-   	// lasth = checkHour(h, lasth);
+   	lasth = checkHour(h, lasth);
 	// lastm = checkMin(m, lastm);
     // lasts = checkSec(s, lasts);
 
-    // use `date mmddHHMMyy.ss`
+    // use `date mmddHHMMyy.ss` for debug or
     // set 1" = 1' --> lasts = checkMin(s,lasts);
     // set 1' = 1 hr --> lastm = checkHour(m,lastm);
-
    	lastm = checkHour(m % 12, lastm);
     lasts = checkMin(s, lasts);
 
@@ -296,9 +297,7 @@ void turnOnNextCam(int whichcam) {
         boolean flag = true;
         while (flag) {
             flag = false;
-            println(whichcam);
             whichcam %= captures.length;
-            println(whichcam);
             captureNext = captures[whichcam];
             try {
                 captureNext.start();
@@ -309,7 +308,6 @@ void turnOnNextCam(int whichcam) {
             }
         }
         if (verbose) println("++ turnOnNextCam() --> " + whichcam);
-        println(whichcam);
         cap = whichcam;
         canswitchcam = true;
     }

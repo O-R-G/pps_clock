@@ -13,6 +13,8 @@ x scale(2)? that might be faster
 x bitshift colors?
 + poll captureList and get the exact cameras on startup
 + absolute timings (tied to the clock) for sort styles
-- absolute timings for cameras
-- turn on realtime pacing
++ absolute timings for cameras
++ turn on realtime pacing
++ on startup, switch to correct cam
 - export lefty / righty
+/
