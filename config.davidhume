@@ -1,13 +1,18 @@
 // this is where images are saved to
 String basepath = "/Users/reinfurt/Dropbox/pps/";
+String sizePref = "size=1296x972";
 
 public void settings()
 {
     try
     {
         // make sure the size of captures is correct!
-        captures = new Capture[1];
+        captures = new Capture[2];
         captures[0] = new Capture(this, "name=FaceTime Camera (Built-in),size=640x480,fps=30");
+		captures[1] = new Capture(this, "name=HD USB Camera,size=1296x972,fps=30");
+
+        // or get captures dynamically
+        // captures = getCaptures();
     }
     catch (Exception e)
     {
@@ -16,5 +21,6 @@ public void settings()
         println("** No camera found . . . exiting. **");
         exit();
     }
+    // size(1280, 720);
     size(640, 360);
 }
