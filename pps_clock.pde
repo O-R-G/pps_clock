@@ -192,7 +192,10 @@ int checkMin(int thism, int thislastm) {
                 playimages=true;
 				thislastm = thism;
             	break;
-			case 5: 
+			case 1: 
+			case 16: 
+			case 31: 
+			case 46: 
                 sort = true;
 				thislastm = thism;
  				break;
@@ -212,6 +215,7 @@ int checkMin(int thism, int thislastm) {
 			case 30: 
 			case 45:
 				switchCam();
+                sort = false;
 				thislastm = thism;
 				break;
 			case 59:
