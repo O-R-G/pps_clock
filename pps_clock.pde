@@ -478,6 +478,7 @@ void adjustColorsEnvelope(ArrayList<Pixel> thispixels, float stubx) {
 void keyPressed() {
     switch(key) {
         case ' ':
+            turnOnCam(cap);
             sort = !sort;
             break;
         case 'a':
