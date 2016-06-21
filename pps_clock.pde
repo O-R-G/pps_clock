@@ -234,18 +234,8 @@ int checkMin(int thism, int thislastm) {
 int checkSec(int thiss, int thislasts) {
 	if (thiss != thislasts) {
     	switch (thiss) {
-			case 0: 
-			case 5: 
-			case 10: 
 			case 15: 
-			case 20: 
-			case 25: 
-			case 30: 
-			case 35: 
-			case 40: 
 			case 45: 
-			case 50: 
-			case 55: 
 				// save image
 				saveImage();
                 if (verbose) println("+ " + thiss);
