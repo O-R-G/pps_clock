@@ -74,7 +74,7 @@ void draw() {
     s = second();
     
    	lasth = checkHour(h, lasth);
-	lastm = checkMin(m, lastm);
+ 	lastm = checkMin(m, lastm);
     lasts = checkSec(s, lasts);
 
     // use `date mmddHHMMyy.ss` for debug or
